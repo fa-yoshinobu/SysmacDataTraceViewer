@@ -1,0 +1,27 @@
+# Build outputs
+bin/
+obj/
+dist/
+src/**/dist/
+
+# Local sample data
+sample_csv/
+sample_csv2/
+sample*/
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs / temp
+*.log
+*.tmp
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
