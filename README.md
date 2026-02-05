@@ -52,6 +52,10 @@ dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
 
 - GitHub: https://github.com/fa-yoshinobu/SysmacDataTraceViewer
 
+### Spec
+
+- `docs/spec.md`
+
 ### License
 
 MIT License. See `LICENSE`.
@@ -105,6 +109,10 @@ dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
 ### リポジトリ
 
 - GitHub: https://github.com/fa-yoshinobu/SysmacDataTraceViewer
+
+### 仕様
+
+- `docs/spec.md`
 
 ### ライセンス
 
