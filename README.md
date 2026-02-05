@@ -1,6 +1,6 @@
 # SysmacDataTraceViewer
 
-Sysmac Data Trace CSV viewer for Windows (.NET WPF).
+Sysmac Studio Data Trace CSV viewer for Windows (.NET WPF).
 
 ---
 
