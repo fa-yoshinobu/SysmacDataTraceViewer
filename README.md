@@ -54,7 +54,7 @@ dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
 
 ### Spec
 
-- `docs/spec.md`
+- [docs/spec.md](docs/spec.md)
 
 ### License
 
@@ -112,7 +112,7 @@ dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
 
 ### 仕様
 
-- `docs/spec.md`
+- [docs/spec.md](docs/spec.md)
 
 ### ライセンス
 
