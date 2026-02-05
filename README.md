@@ -8,7 +8,7 @@ Sysmac Data Trace CSV viewer for Windows (.NET WPF).
 
 ### Overview
 
-SysmacDataTraceViewer visualizes Sysmac trace CSV files on Windows.
+SysmacDataTraceViewer visualizes Sysmac Studio trace CSV files on Windows.
 It plots `:BOOL` signals as ON/OFF timeline lanes and shows typed value signals at the cursor position.
 
 ![Sysmac Data Trace Viewer](Sysmac%20Data%20Trace%20Viewer.png)
@@ -62,7 +62,7 @@ MIT License. See `LICENSE`.
 
 ### 概要
 
-SysmacDataTraceViewer は、Windows 上で Sysmac Data Trace CSV を可視化するビューアです。  
+SysmacDataTraceViewer は、Windows 上で Sysmac Studio Data Trace CSV を可視化するビューアです。  
 `:BOOL` は ON/OFF のタイムチャートとして表示し、その他の型付き信号はカーソル位置の値として表示します。
 
 ![Sysmac Data Trace Viewer](Sysmac%20Data%20Trace%20Viewer.png)
