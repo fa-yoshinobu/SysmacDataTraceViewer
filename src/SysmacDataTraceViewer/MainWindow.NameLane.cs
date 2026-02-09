@@ -31,21 +31,84 @@ public partial class MainWindow
         {
             NameLaneGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
             var signalIndex = _visibleBoolSignalIndexes.Count > i ? _visibleBoolSignalIndexes[i] : -1;
+            var rowGrid = new Grid
+            {
+                Margin = new Thickness(2, 0, 2, 0)
+            };
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
             var label = new TextBlock
             {
                 Text = laneNames[i],
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(6, 0, 6, 0),
+                Margin = new Thickness(4, 0, 4, 0),
                 Tag = signalIndex,
                 Cursor = System.Windows.Input.Cursors.Hand
             };
             label.MouseLeftButtonDown += NameLaneLabel_MouseLeftButtonDown;
-            Grid.SetRow(label, i);
-            NameLaneGrid.Children.Add(label);
+            Grid.SetColumn(label, 0);
+            rowGrid.Children.Add(label);
+
+            var valueText = new TextBlock
+            {
+                Text = "-",
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0, 2, 0),
+                FontWeight = FontWeights.SemiBold,
+                Foreground = System.Windows.Media.Brushes.DimGray,
+                Tag = $"value:{signalIndex}"
+            };
+            Grid.SetColumn(valueText, 1);
+            rowGrid.Children.Add(valueText);
+
+            Grid.SetRow(rowGrid, i);
+            NameLaneGrid.Children.Add(rowGrid);
         }
 
         UpdateNameLaneHighlight();
+        UpdateNameLaneValues(_lastPrimarySampleIndex);
         UpdateNameLaneScrollBar();
+    }
+
+    private void UpdateNameLaneValues(int sampleIndex)
+    {
+        if (_traceData is null || sampleIndex < 0 || sampleIndex >= _traceData.SampleCount)
+        {
+            foreach (var rowGrid in NameLaneGrid.Children.OfType<Grid>())
+            {
+                var valueBlock = rowGrid.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Tag is string tag && tag.StartsWith("value:", StringComparison.Ordinal));
+                if (valueBlock is not null)
+                {
+                    valueBlock.Text = "-";
+                }
+            }
+
+            return;
+        }
+
+        foreach (var rowGrid in NameLaneGrid.Children.OfType<Grid>())
+        {
+            var valueBlock = rowGrid.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Tag is string tag && tag.StartsWith("value:", StringComparison.Ordinal));
+            if (valueBlock is null)
+            {
+                continue;
+            }
+
+            if (valueBlock.Tag is not string tagValue || !int.TryParse(tagValue.AsSpan(6), out var signalIndex))
+            {
+                continue;
+            }
+
+            if (signalIndex < 0 || signalIndex >= _traceData.BoolSignals.Count)
+            {
+                valueBlock.Text = "-";
+                continue;
+            }
+
+            var value = _traceData.BoolSignals[signalIndex].Values[sampleIndex];
+            valueBlock.Text = value.HasValue ? (value.Value ? "1" : "0") : "-";
+        }
     }
 
     private void NameLaneScrollBar_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -118,27 +181,39 @@ public partial class MainWindow
 
         if (!_jumpScopeSelectedBoolOnly || !_selectedJumpBoolSignalIndex.HasValue)
         {
-            foreach (var child in NameLaneGrid.Children.OfType<TextBlock>())
+            foreach (var rowGrid in NameLaneGrid.Children.OfType<Grid>())
             {
-                child.Foreground = System.Windows.Media.Brushes.Black;
-                child.FontWeight = FontWeights.Normal;
+                var label = rowGrid.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Tag is int);
+                if (label is null)
+                {
+                    continue;
+                }
+
+                label.Foreground = System.Windows.Media.Brushes.Black;
+                label.FontWeight = FontWeights.Normal;
             }
 
             return;
         }
 
         var selected = _selectedJumpBoolSignalIndex.Value;
-        foreach (var child in NameLaneGrid.Children.OfType<TextBlock>())
+        foreach (var rowGrid in NameLaneGrid.Children.OfType<Grid>())
         {
-            if (child.Tag is int signalIndex && signalIndex == selected)
+            var label = rowGrid.Children.OfType<TextBlock>().FirstOrDefault(tb => tb.Tag is int);
+            if (label is null)
             {
-                child.Foreground = System.Windows.Media.Brushes.Red;
-                child.FontWeight = FontWeights.Bold;
+                continue;
+            }
+
+            if (label.Tag is int signalIndex && signalIndex == selected)
+            {
+                label.Foreground = System.Windows.Media.Brushes.Red;
+                label.FontWeight = FontWeights.Bold;
             }
             else
             {
-                child.Foreground = System.Windows.Media.Brushes.Black;
-                child.FontWeight = FontWeights.Normal;
+                label.Foreground = System.Windows.Media.Brushes.Black;
+                label.FontWeight = FontWeights.Normal;
             }
         }
     }
