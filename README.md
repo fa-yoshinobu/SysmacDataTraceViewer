@@ -13,6 +13,10 @@ It plots `:BOOL` signals as ON/OFF timeline lanes and shows typed value signals 
 
 ![Sysmac Data Trace Viewer](Sysmac%20Data%20Trace%20Viewer.png)
 
+### Current Version
+
+- `1.0.2`
+
 ### Features
 
 - BOOL timeline chart (multi-lane ON/OFF visualization)
@@ -24,6 +28,12 @@ It plots `:BOOL` signals as ON/OFF timeline lanes and shows typed value signals 
 - Per-BOOL color setting (`#RRGGBB`)
 - PNG export (visible range / full range)
 - Comment CSV load/save (comment, visibility, color, order)
+
+### Recent Updates
+
+- BOOL Name Lane `Value` column shows `0/1` at the current cursor sample.
+- Hovering a BOOL signal in the time chart now shows signal name with state (for example `Signal_X: ON`).
+- Version updated to `1.0.2`.
 
 ### Supported CSV Signal Types
 
@@ -66,26 +76,36 @@ MIT License. See `LICENSE`.
 
 ### 概要
 
-SysmacDataTraceViewer は、Windows 上で Sysmac Studio Data Trace CSV を可視化するビューアです。  
-`:BOOL` は ON/OFF のタイムチャートとして表示し、その他の型付き信号はカーソル位置の値として表示します。
+SysmacDataTraceViewer は、Windows 上で Sysmac Studio の Data Trace CSV を可視化するツールです。  
+`:BOOL` 信号は ON/OFF のタイムラインとして表示し、その他の型はカーソル位置の値として表示します。
 
 ![Sysmac Data Trace Viewer](Sysmac%20Data%20Trace%20Viewer.png)
 
+### 現在のバージョン
+
+- `1.0.2`
+
 ### 主な機能
 
-- BOOL タイムチャート（複数レーン）
+- BOOL タイムライン（複数レーンの ON/OFF 表示）
 - 主カーソル + 差分カーソル
-- BOOL 変数と値変数の表示/非表示
-- 変化なし変数の識別（`[No Change]`）
+- BOOL 変数 / 値変数の表示切り替え
+- 変化なし変数の非表示（`[No Change]`）
 - BOOL/値リストのドラッグ&ドロップ並び替え
-- ラベル表示切替（`Variable Name` / `Comment`）
+- ラベル表示切り替え（`Variable Name` / `Comment`）
 - BOOL ごとの色設定（`#RRGGBB`）
 - PNG 出力（表示範囲 / 全範囲）
-- コメント CSV の読込/保存（コメント、表示状態、色、並び順）
+- コメント CSV の読み込み/保存（コメント・表示・色・順序）
 
-### 対応CSV信号型
+### 最近の更新
 
-- タイムチャート: `:BOOL`
+- BOOL 名レーンの `Value` 列に、カーソル位置の `0/1` を表示。
+- 時間チャート上で BOOL 信号にホバーした際、信号名つき状態表示（例: `Signal_X: ON`）に対応。
+- バージョンを `1.0.2` に更新。
+
+### 対応 CSV 信号型
+
+- タイムライン: `:BOOL`
 - 値パネル: `:INT`, `:BYTE`, `:WORD`, `:DWORD`, `:LWORD`, `:SINT`, `:DINT`, `:LINT`, `:USINT`, `:UINT`, `:UDINT`, `:ULINT`, `:REAL`, `:LREAL`, `:TIME`, `:DATE`, `:TIME_OF_DAY`, `:DATE_AND_TIME`
 
 ### ビルド
@@ -96,7 +116,7 @@ dotnet build .\SysmacDataTraceViewer.sln -c Release
 dotnet run --project .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj
 ```
 
-### 配布用ビルド（単一EXE）
+### 配布（単一 EXE）
 
 ```powershell
 dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
@@ -110,10 +130,10 @@ dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
 
 - GitHub: https://github.com/fa-yoshinobu/SysmacDataTraceViewer
 
-### 仕様
+### 仕様書
 
 - [docs/spec.md](docs/spec.md)
 
 ### ライセンス
 
-MIT License（詳細は `LICENSE` を参照）。
+MIT License。`LICENSE` を参照。
