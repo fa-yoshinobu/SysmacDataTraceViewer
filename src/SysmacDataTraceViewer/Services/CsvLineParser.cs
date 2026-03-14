@@ -1,6 +1,6 @@
 namespace SysmacDataTraceViewer.Services;
 
-public static class CsvLineParser
+internal static class CsvLineParser
 {
     public static List<string> Parse(string line)
     {

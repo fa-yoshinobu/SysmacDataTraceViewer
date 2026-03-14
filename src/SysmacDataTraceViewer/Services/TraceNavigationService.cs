@@ -2,7 +2,7 @@ using SysmacDataTraceViewer.Models;
 
 namespace SysmacDataTraceViewer.Services;
 
-public static class TraceNavigationService
+internal static class TraceNavigationService
 {
     public static List<int> BuildChangePointSampleIndexes(TraceData traceData, IReadOnlyList<int> signalIndexes)
     {
@@ -13,7 +13,7 @@ public static class TraceNavigationService
             bool? lastValue = null;
             var hasLast = false;
 
-            for (var i = 0; i < values.Length; i++)
+            for (var i = 0; i < values.Count; i++)
             {
                 var current = values[i];
                 if (!current.HasValue)

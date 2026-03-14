@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace SysmacDataTraceViewer.ViewModels;
 
-public sealed class MainViewModel : INotifyPropertyChanged
+internal sealed class MainViewModel : INotifyPropertyChanged
 {
     private string _statusText = "Load a CSV file to display BOOL timeline and value variables.";
     private string _cursorTimeText = "-";
@@ -81,7 +81,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 }
 
-public sealed class ValueSignalRow : INotifyPropertyChanged
+internal sealed class ValueSignalRow : INotifyPropertyChanged
 {
     private string _valueText = "-";
     private bool _isVisible = true;
@@ -176,7 +176,7 @@ public sealed class ValueSignalRow : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 }
 
-public sealed class BoolSignalRow : INotifyPropertyChanged
+internal sealed class BoolSignalRow : INotifyPropertyChanged
 {
     private bool _isVisible = true;
     private string _colorHex = "#1E90FF";

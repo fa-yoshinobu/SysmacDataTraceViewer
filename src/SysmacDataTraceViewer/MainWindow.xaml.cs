@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.ComponentModel;
 using System.Windows.Controls;
@@ -13,7 +14,8 @@ using Input = System.Windows.Input;
 
 namespace SysmacDataTraceViewer;
 
-public partial class MainWindow : Window
+[SuppressMessage("Performance", "CA1812:Avoid uninstantiated internal classes", Justification = "Instantiated by WPF XAML startup and window navigation.")]
+internal sealed partial class MainWindow : Window
 {
     // Core plotting/state orchestration for the main window.
     private const double PlotLeftMargin = 16;
@@ -56,8 +58,8 @@ public partial class MainWindow : Window
     private double _dataMaxX;
     private double _windowSizeX = 1.0;
     private bool _showCommentLabels;
-    private bool _showTypeSuffix = false;
-    private bool _showCursorRangeBand = false;
+    private bool _showTypeSuffix;
+    private bool _showCursorRangeBand;
     private double? _cursorX;
     private double? _deltaCursorX;
     private int _lastPrimarySampleIndex = -1;
@@ -67,8 +69,8 @@ public partial class MainWindow : Window
     private int _lastHoverEndExclusive = -1;
     private bool? _lastHoverState;
     private readonly Dictionary<int, OxyColor> _boolColors = new();
-    private List<int> _changePointSampleIndexes = new();
-    private List<int> _visibleBoolSignalIndexes = new();
+    private List<int> _changePointSampleIndexes = [];
+    private List<int> _visibleBoolSignalIndexes = [];
     private bool _jumpScopeSelectedBoolOnly;
     private int? _selectedJumpBoolSignalIndex;
 
@@ -86,7 +88,7 @@ public partial class MainWindow : Window
         NameLaneScrollViewer.SizeChanged += (_, _) => UpdateNameLaneScrollBar();
     }
 
-    private void ReorderBoolRows(IReadOnlyList<string> orderedNames)
+    private void ReorderBoolRows(List<string> orderedNames)
     {
         if (orderedNames.Count == 0)
         {
@@ -118,7 +120,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ReorderValueRows(IReadOnlyList<string> orderedNames)
+    private void ReorderValueRows(List<string> orderedNames)
     {
         if (orderedNames.Count == 0)
         {
@@ -233,7 +235,7 @@ public partial class MainWindow : Window
         ClearHoverSegment();
     }
 
-    private void DrawTrace(TraceData traceData, IReadOnlyList<int> visibleSignalIndexes)
+    private void DrawTrace(TraceData traceData, List<int> visibleSignalIndexes)
     {
         var model = new PlotModel
         {
@@ -259,7 +261,7 @@ public partial class MainWindow : Window
         model.Axes.Add(xAxis);
 
         var laneNames = visibleSignalIndexes.Select(GetBoolLaneLabel).ToList();
-        _visibleBoolSignalIndexes = visibleSignalIndexes.ToList();
+        _visibleBoolSignalIndexes = [.. visibleSignalIndexes];
         var yAxis = new LinearAxis
         {
             Position = AxisPosition.Left,
@@ -642,7 +644,7 @@ public partial class MainWindow : Window
 
     private void ValueSignalRow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender is not ValueSignalRow row)
+        if (sender is not ValueSignalRow)
         {
             return;
         }
@@ -1254,11 +1256,11 @@ public partial class MainWindow : Window
         if (_selectedJumpBoolSignalIndex.HasValue &&
             _viewModel.BoolSignals.FirstOrDefault(r => r.Index == _selectedJumpBoolSignalIndex.Value) is { IsVisible: true } selected)
         {
-            return new List<int> { selected.Index };
+            return [selected.Index];
         }
 
         // Selected BOOL mode: jump is disabled until a visible BOOL is selected.
-        return new List<int>();
+        return [];
     }
 
     private void EnsureJumpScopeSelection()
@@ -1316,7 +1318,7 @@ public partial class MainWindow : Window
     }
 
     private List<int> GetVisibleBoolIndexes() =>
-        _viewModel.BoolSignals.Where(static s => s.IsVisible).Select(static s => s.Index).ToList();
+        [.. _viewModel.BoolSignals.Where(static s => s.IsVisible).Select(static s => s.Index)];
 
 
 }

@@ -4,7 +4,7 @@ using System.IO;
 
 namespace SysmacDataTraceViewer.Services;
 
-public static class CsvTraceParser
+internal static class CsvTraceParser
 {
     public static TraceData Parse(string path)
     {
@@ -54,7 +54,7 @@ public static class CsvTraceParser
             {
                 boolColumns.Add((i, headers[i]));
             }
-            else if (headers[i].Contains(':'))
+            else if (headers[i].Contains(':', StringComparison.Ordinal))
             {
                 valueColumns.Add((i, headers[i], ExtractTypeName(headers[i])));
             }

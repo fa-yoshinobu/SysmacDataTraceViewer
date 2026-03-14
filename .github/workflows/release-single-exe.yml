@@ -1,0 +1,115 @@
+name: Release Single EXE
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - "Ver.*"
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Validate tag and project version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if (-not $tag.StartsWith("Ver.", [System.StringComparison]::Ordinal)) {
+            throw "Unsupported tag format: $tag"
+          }
+
+          [xml]$project = Get-Content "src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj"
+          $projectVersion = $project.Project.PropertyGroup.Version
+          $tagVersion = $tag.Substring(4)
+          if ($projectVersion -ne $tagVersion) {
+            throw "Tag version '$tagVersion' does not match project version '$projectVersion'."
+          }
+
+          "tag_name=$tag" >> $env:GITHUB_OUTPUT
+          "project_version=$projectVersion" >> $env:GITHUB_OUTPUT
+          "release_title=SysmacDataTraceViewer $tag" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore .\SysmacDataTraceViewer.sln
+
+      - name: Build
+        run: dotnet build .\SysmacDataTraceViewer.sln -c Release --no-restore -warnaserror
+
+      - name: Publish single-file EXE
+        shell: pwsh
+        run: |
+          dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -o .\artifacts\release\win-x64
+
+      - name: Prepare release assets
+        id: assets
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.version.outputs.tag_name }}"
+          $publishDir = Join-Path $PWD "artifacts\release\win-x64"
+          $sourceExe = Join-Path $publishDir "SysmacDataTraceViewer.exe"
+          if (-not (Test-Path $sourceExe)) {
+            throw "Published EXE not found: $sourceExe"
+          }
+
+          $exeName = "SysmacDataTraceViewer-$tag-win-x64.exe"
+          $zipName = "SysmacDataTraceViewer-$tag-win-x64.zip"
+          $hashName = "SHA256SUMS.txt"
+
+          $releaseExe = Join-Path $publishDir $exeName
+          Move-Item -Path $sourceExe -Destination $releaseExe -Force
+
+          $releaseZip = Join-Path $publishDir $zipName
+          Compress-Archive -Path $releaseExe, "LICENSE" -DestinationPath $releaseZip -Force
+
+          $hash = Get-FileHash -Algorithm SHA256 $releaseExe
+          $hashLine = "$($hash.Hash) *$exeName"
+          $hashFile = Join-Path $publishDir $hashName
+          Set-Content -Path $hashFile -Value $hashLine -Encoding Ascii
+
+          "exe_path=$releaseExe" >> $env:GITHUB_OUTPUT
+          "zip_path=$releaseZip" >> $env:GITHUB_OUTPUT
+          "hash_path=$hashFile" >> $env:GITHUB_OUTPUT
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.version.outputs.tag_name }}"
+          $title = "${{ steps.version.outputs.release_title }}"
+          $assets = @(
+            "${{ steps.assets.outputs.exe_path }}",
+            "${{ steps.assets.outputs.zip_path }}",
+            "${{ steps.assets.outputs.hash_path }}"
+          )
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $assets --clobber
+          }
+          else {
+            gh release create $tag $assets --title $title --generate-notes --verify-tag
+          }

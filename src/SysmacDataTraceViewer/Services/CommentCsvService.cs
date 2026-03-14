@@ -1,16 +1,17 @@
+using System.Globalization;
 using System.IO;
 
 namespace SysmacDataTraceViewer.Services;
 
-public sealed record CommentSignalState(string Name, string Comment, bool IsVisible, string ColorHex, int Order);
+internal sealed record CommentSignalState(string Name, string Comment, bool IsVisible, string ColorHex, int Order);
 
-public sealed class CommentCsvData
+internal sealed class CommentCsvData
 {
-    public List<CommentSignalState> BoolSignals { get; } = new();
-    public List<CommentSignalState> ValueSignals { get; } = new();
+    public List<CommentSignalState> BoolSignals { get; } = [];
+    public List<CommentSignalState> ValueSignals { get; } = [];
 }
 
-public static class CommentCsvService
+internal static class CommentCsvService
 {
     public static void Save(
         string filePath,
@@ -67,16 +68,19 @@ public static class CommentCsvService
     }
 
     private static string BuildLine(string type, string name, string comment, bool isVisible, string colorHex, int order) =>
-        $"{Escape(type)},{Escape(name)},{Escape(comment)},{Escape(isVisible ? "1" : "0")},{Escape(colorHex)},{Escape(order.ToString())}";
+        $"{Escape(type)},{Escape(name)},{Escape(comment)},{Escape(isVisible ? "1" : "0")},{Escape(colorHex)},{Escape(order.ToString(CultureInfo.InvariantCulture))}";
 
     private static string Escape(string value)
     {
-        if (!value.Contains(',') && !value.Contains('"') && !value.Contains('\n') && !value.Contains('\r'))
+        if (value.IndexOf(',', StringComparison.Ordinal) < 0 &&
+            value.IndexOf('"', StringComparison.Ordinal) < 0 &&
+            value.IndexOf('\n', StringComparison.Ordinal) < 0 &&
+            value.IndexOf('\r', StringComparison.Ordinal) < 0)
         {
             return value;
         }
 
-        return $"\"{value.Replace("\"", "\"\"")}\"";
+        return $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
     }
 
     private static bool TryParseBool(string text, out bool value)

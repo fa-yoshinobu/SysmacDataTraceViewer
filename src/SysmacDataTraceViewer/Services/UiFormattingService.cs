@@ -2,7 +2,7 @@ using SysmacDataTraceViewer.Models;
 
 namespace SysmacDataTraceViewer.Services;
 
-public static class UiFormattingService
+internal static class UiFormattingService
 {
     public static string FormatVariableName(string rawName, bool showTypeSuffix)
     {
@@ -18,7 +18,7 @@ public static class UiFormattingService
     public static string BuildDefaultComment(string signalName)
     {
         var noType = signalName;
-        var typePos = signalName.IndexOf(':');
+        var typePos = signalName.IndexOf(':', StringComparison.Ordinal);
         if (typePos > 0)
         {
             noType = signalName[..typePos];

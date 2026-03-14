@@ -1,5 +1,5 @@
 namespace SysmacDataTraceViewer;
 
-public partial class App : System.Windows.Application
+internal sealed partial class App : System.Windows.Application
 {
 }

@@ -1,0 +1,50 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-and-analyze:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore
+        run: dotnet restore .\SysmacDataTraceViewer.sln
+
+      - name: Build
+        run: dotnet build .\SysmacDataTraceViewer.sln -c Release --no-restore -warnaserror
+
+      - name: Verify formatting and analyzers
+        shell: pwsh
+        run: |
+          dotnet format .\SysmacDataTraceViewer.sln whitespace --verify-no-changes --no-restore
+          dotnet format .\SysmacDataTraceViewer.sln style --verify-no-changes --severity warn --no-restore
+          dotnet format .\SysmacDataTraceViewer.sln analyzers --verify-no-changes --severity warn --no-restore
+
+      - name: Publish single-file EXE smoke test
+        shell: pwsh
+        run: |
+          dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -o .\artifacts\ci\win-x64

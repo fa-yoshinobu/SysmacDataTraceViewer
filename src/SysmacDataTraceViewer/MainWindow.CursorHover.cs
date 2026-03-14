@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using OxyPlot;
 using SysmacDataTraceViewer.Models;
@@ -5,7 +6,7 @@ using SysmacDataTraceViewer.Services;
 
 namespace SysmacDataTraceViewer;
 
-public partial class MainWindow
+internal partial class MainWindow
 {
     // Cursor movement, delta cursor, and hover segment interactions.
     private void UpdatePrimaryCursorAtPosition(Point plotPosition)
@@ -82,7 +83,7 @@ public partial class MainWindow
 
         var delta = Math.Abs(_deltaCursorX.Value - _cursorX.Value);
         var span = TimeSpan.FromSeconds(delta);
-        _viewModel.CursorDeltaText = span.ToString(@"hh\:mm\:ss\.fff");
+        _viewModel.CursorDeltaText = span.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture);
     }
 
     private void UpdateCursorRangeBand()
@@ -140,9 +141,9 @@ public partial class MainWindow
 
         _lastPrimarySampleIndex = sampleIndex;
         var elapsed = TimeSpan.FromSeconds(_traceData.ElapsedSeconds[sampleIndex]);
-        _viewModel.CursorTimeText = elapsed.ToString(@"hh\:mm\:ss\.fff");
+        _viewModel.CursorTimeText = elapsed.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture);
         _viewModel.CursorClockText = UiFormattingService.BuildOriginalTimeText(_traceData, sampleIndex);
-        _viewModel.CursorSampleText = sampleIndex.ToString();
+        _viewModel.CursorSampleText = sampleIndex.ToString(CultureInfo.InvariantCulture);
         UpdateValueRows(_traceData, sampleIndex);
         UpdateNameLaneValues(sampleIndex);
         _cursorX = _traceData.ElapsedSeconds[sampleIndex];
@@ -225,7 +226,7 @@ public partial class MainWindow
         }
 
         var endExclusive = sampleIndex + 1;
-        while (endExclusive < signal.Values.Length && signal.Values[endExclusive].HasValue && signal.Values[endExclusive] == current)
+        while (endExclusive < signal.Values.Count && signal.Values[endExclusive].HasValue && signal.Values[endExclusive] == current)
         {
             endExclusive++;
         }
@@ -250,7 +251,7 @@ public partial class MainWindow
         var signalLabel = GetBoolLaneLabel(signalIndex);
         var stateText = current.Value ? "ON" : "OFF";
         _viewModel.HoverStateText = $"{signalLabel}: {stateText}";
-        _viewModel.HoverDurationText = TimeSpan.FromSeconds(duration).ToString(@"hh\:mm\:ss\.fff");
+        _viewModel.HoverDurationText = TimeSpan.FromSeconds(duration).ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture);
 
         if (_hoverSegmentAnnotation is not null)
         {

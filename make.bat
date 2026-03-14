@@ -59,5 +59,5 @@ exit /b 0
 
 :error
 echo Build failed.
-pause
+if /I not "%CI%"=="true" if /I not "%GITHUB_ACTIONS%"=="true" pause
 exit /b 1

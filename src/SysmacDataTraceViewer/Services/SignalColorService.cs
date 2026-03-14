@@ -1,11 +1,12 @@
 using OxyPlot;
+using System.Globalization;
 
 namespace SysmacDataTraceViewer.Services;
 
-public static class SignalColorService
+internal static class SignalColorService
 {
     private static readonly OxyColor[] DefaultPalette =
-    {
+    [
         OxyColor.FromRgb(0x00, 0x72, 0xB2), // blue
         OxyColor.FromRgb(0xD5, 0x5E, 0x00), // vermillion
         OxyColor.FromRgb(0x00, 0x9E, 0x73), // green
@@ -16,7 +17,7 @@ public static class SignalColorService
         OxyColor.FromRgb(0x7A, 0x01, 0x7A), // purple
         OxyColor.FromRgb(0x2E, 0x7D, 0x32), // dark green
         OxyColor.FromRgb(0xC6, 0x28, 0x28), // red
-    };
+    ];
 
     public static OxyColor GetDefaultPaletteColor(int index) =>
         DefaultPalette[index % DefaultPalette.Length];
@@ -43,9 +44,10 @@ public static class SignalColorService
             return false;
         }
 
-        if (!byte.TryParse(trimmed[..2], System.Globalization.NumberStyles.HexNumber, null, out var r) ||
-            !byte.TryParse(trimmed.Substring(2, 2), System.Globalization.NumberStyles.HexNumber, null, out var g) ||
-            !byte.TryParse(trimmed.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out var b))
+        var hex = trimmed.AsSpan();
+        if (!byte.TryParse(hex[..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var r) ||
+            !byte.TryParse(hex.Slice(2, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var g) ||
+            !byte.TryParse(hex.Slice(4, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var b))
         {
             return false;
         }

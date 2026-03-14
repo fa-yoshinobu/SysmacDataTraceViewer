@@ -1,5 +1,11 @@
 # SysmacDataTraceViewer
 
+[![release](https://img.shields.io/github/v/tag/fa-yoshinobu/SysmacDataTraceViewer?label=release&color=orange)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/tags)
+[![CI](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/actions/workflows/ci.yml/badge.svg)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/actions/workflows/ci.yml)
+[![release-exe](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/actions/workflows/release-single-exe.yml/badge.svg)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/actions/workflows/release-single-exe.yml)
+[![license](https://img.shields.io/badge/license-MIT-yellowgreen)](LICENSE)
+[![.NET](https://img.shields.io/badge/.NET-8.0--windows-512BD4)](src/SysmacDataTraceViewer/SysmacDataTraceViewer.csproj)
+
 Sysmac Studio Data Trace CSV viewer for Windows (.NET WPF).
 
 ---
@@ -51,12 +57,24 @@ dotnet run --project .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj
 ### Publish (Single EXE)
 
 ```powershell
+.\make.bat win-x64 .\dist\win-x64
+```
+
+Or run the publish command directly:
+
+```powershell
 dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
   -c Release -r win-x64 `
   -p:PublishSingleFile=true `
   -p:SelfContained=true `
   -o .\dist\win-x64
 ```
+
+### Automated CI / Release
+
+- `CI`: runs on push to `main` and on pull requests. It restores, builds with analyzers enabled, verifies `dotnet format`, and smoke-tests Single EXE publish.
+- `Release Single EXE`: push a tag like `Ver.1.0.2` that matches the project `<Version>` to build the `win-x64` self-contained Single EXE and create a GitHub Release automatically.
+- `VirusTotal scan on release`: runs after the GitHub Release is published and appends the VirusTotal result to the release page.
 
 ### Repository
 

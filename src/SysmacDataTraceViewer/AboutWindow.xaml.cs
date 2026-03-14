@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -8,7 +9,7 @@ using OxyPlot.Wpf;
 
 namespace SysmacDataTraceViewer;
 
-public partial class AboutWindow : Window
+internal sealed partial class AboutWindow : Window
 {
     public AboutWindow()
     {
@@ -38,10 +39,16 @@ public partial class AboutWindow : Window
                 UseShellExecute = true
             });
         }
-        catch
+        catch (InvalidOperationException)
         {
             // Ignore browser launch failures.
         }
+        catch (Win32Exception)
+        {
+            // Ignore browser launch failures.
+        }
+
+        e.Handled = true;
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
@@ -51,7 +58,7 @@ public partial class AboutWindow : Window
         var info = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
         if (!string.IsNullOrWhiteSpace(info))
         {
-            var plusIndex = info.IndexOf('+');
+            var plusIndex = info.IndexOf('+', StringComparison.Ordinal);
             return plusIndex >= 0 ? info[..plusIndex] : info;
         }
 
@@ -71,7 +78,15 @@ public partial class AboutWindow : Window
                 return reader.ReadToEnd();
             }
         }
-        catch
+        catch (IOException)
+        {
+            // Ignore and fall back below.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Ignore and fall back below.
+        }
+        catch (NotSupportedException)
         {
             // Ignore and fall back below.
         }

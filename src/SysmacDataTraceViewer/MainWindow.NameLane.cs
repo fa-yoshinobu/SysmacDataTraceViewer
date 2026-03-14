@@ -3,10 +3,10 @@ using System.Windows.Controls;
 
 namespace SysmacDataTraceViewer;
 
-public partial class MainWindow
+internal partial class MainWindow
 {
     // Left name-lane rendering, selection sync, and horizontal scrolling.
-    private void UpdateNameLanePanel(IReadOnlyList<string> laneNames)
+    private void UpdateNameLanePanel(List<string> laneNames)
     {
         NameLaneGrid.RowDefinitions.Clear();
         NameLaneGrid.Children.Clear();

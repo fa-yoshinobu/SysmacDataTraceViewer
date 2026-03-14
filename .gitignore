@@ -2,7 +2,9 @@
 bin/
 obj/
 dist/
+artifacts/
 src/**/dist/
+src/**/artifacts/
 
 # Local sample data
 sample_csv/

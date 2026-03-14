@@ -1,4 +1,5 @@
 using System.IO;
+using System.Security;
 using System.Windows;
 using Microsoft.Win32;
 using OxyPlot;
@@ -7,7 +8,7 @@ using SysmacDataTraceViewer.Services;
 
 namespace SysmacDataTraceViewer;
 
-public partial class MainWindow
+internal partial class MainWindow
 {
     // File I/O actions: load/save CSV, comments, PNG export.
     private void LoadCsv_Click(object sender, RoutedEventArgs e)
@@ -36,7 +37,31 @@ public partial class MainWindow
             _viewModel.StatusText =
                 UiFormattingService.BuildStatusText(_traceData, _traceData.BoolSignals.Count, _viewModel.ValueSignals.Count);
         }
-        catch (Exception ex)
+        catch (InvalidDataException ex)
+        {
+            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (IOException ex)
+        {
+            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (SecurityException ex)
+        {
+            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (FormatException ex)
+        {
+            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (ArgumentException ex)
+        {
+            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (NotSupportedException ex)
         {
             MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
         }
@@ -141,7 +166,27 @@ public partial class MainWindow
                 model.InvalidatePlot(false);
             }
         }
-        catch (Exception ex)
+        catch (IOException ex)
+        {
+            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (SecurityException ex)
+        {
+            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (InvalidOperationException ex)
+        {
+            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (ArgumentException ex)
+        {
+            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        catch (NotSupportedException ex)
         {
             MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
         }
@@ -259,7 +304,49 @@ public partial class MainWindow
             RefreshVisibleValueRows();
             RedrawWithVisibility();
         }
-        catch (Exception ex)
+        catch (InvalidDataException ex)
+        {
+            if (showErrorDialog)
+            {
+                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (IOException ex)
+        {
+            if (showErrorDialog)
+            {
+                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            if (showErrorDialog)
+            {
+                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (SecurityException ex)
+        {
+            if (showErrorDialog)
+            {
+                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (FormatException ex)
+        {
+            if (showErrorDialog)
+            {
+                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            if (showErrorDialog)
+            {
+                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        catch (NotSupportedException ex)
         {
             if (showErrorDialog)
             {
