@@ -49,15 +49,13 @@ It plots `:BOOL` signals as ON/OFF timeline lanes and shows typed value signals 
 ### Build
 
 ```powershell
-dotnet restore
-dotnet build .\SysmacDataTraceViewer.sln -c Release
-dotnet run --project .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj
+ci.bat
 ```
 
 ### Publish (Single EXE)
 
 ```powershell
-dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\artifacts\publish
+build.bat
 ```
 
 Or run the publish command directly:
