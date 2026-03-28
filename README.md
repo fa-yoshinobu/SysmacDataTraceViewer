@@ -127,12 +127,16 @@ SysmacDataTraceViewer は、Windows 上で Sysmac Studio の Data Trace CSV を�
 ### ビルド
 
 ```powershell
-dotnet restore
-dotnet build .\SysmacDataTraceViewer.sln -c Release
-dotnet run --project .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj
+ci.bat
 ```
 
 ### 配布（単一 EXE）
+
+```powershell
+build.bat
+```
+
+または、publish コマンドを直接実行します。
 
 ```powershell
 dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
