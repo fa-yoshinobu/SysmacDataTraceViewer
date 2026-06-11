@@ -67,7 +67,7 @@ internal partial class MainWindow
         }
 
         UpdateNameLaneHighlight();
-        UpdateNameLaneValues(_lastPrimarySampleIndex);
+        UpdateNameLaneValues(_cursorState.LastPrimarySampleIndex);
         UpdateNameLaneScrollBar();
     }
 

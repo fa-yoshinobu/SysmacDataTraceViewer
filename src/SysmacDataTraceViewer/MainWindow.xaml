@@ -42,41 +42,35 @@
         <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,0,0,8">
             <Menu Background="#ECEFF3" Foreground="#1F2937">
                 <MenuItem Header="_File">
-                    <MenuItem Header="_Open Trace CSV..." Click="LoadCsv_Click" InputGestureText="Ctrl+O" />
+                    <MenuItem Header="_Open Trace CSV..." Command="{Binding OpenTraceCommand}" InputGestureText="Ctrl+O" />
                     <MenuItem Header="_Export Chart PNG">
-                        <MenuItem Header="Export _Visible Range PNG..." Click="SavePng_Click" InputGestureText="Ctrl+E" />
-                        <MenuItem Header="Export _Full Range PNG..." Click="SavePngFullRange_Click" />
+                        <MenuItem Header="Export _Visible Range PNG..." Command="{Binding ExportVisiblePngCommand}" InputGestureText="Ctrl+E" />
+                        <MenuItem Header="Export _Full Range PNG..." Command="{Binding ExportFullPngCommand}" />
                     </MenuItem>
-                    <MenuItem Header="_Load Comments..." Click="LoadComments_Click" />
-                    <MenuItem Header="_Save Comments..." Click="SaveComments_Click" />
+                    <MenuItem Header="_Load Comments..." Command="{Binding LoadCommentsCommand}" />
+                    <MenuItem Header="_Save Comments..." Command="{Binding SaveCommentsCommand}" />
                     <Separator />
-                    <MenuItem Header="E_xit" Click="Close_Click" />
+                    <MenuItem Header="E_xit" Command="{Binding CloseCommand}" />
                 </MenuItem>
                 <MenuItem Header="_View">
-                    <MenuItem x:Name="ShowTypeSuffixMenuItem"
-                              Header="Show Type Suffix"
+                    <MenuItem Header="Show Type Suffix"
                               IsCheckable="True"
-                              IsChecked="False"
-                              Checked="ShowTypeSuffixCheckBox_Changed"
-                              Unchecked="ShowTypeSuffixCheckBox_Changed" />
-                    <MenuItem x:Name="ShowRangeBandMenuItem"
-                              Header="Show Range Band"
+                              IsChecked="{Binding ShowTypeSuffix, Mode=TwoWay}" />
+                    <MenuItem Header="Show Range Band"
                               IsCheckable="True"
-                              IsChecked="False"
-                              Checked="RangeBandCheckBox_Changed"
-                              Unchecked="RangeBandCheckBox_Changed" />
+                              IsChecked="{Binding ShowRangeBand, Mode=TwoWay}" />
                 </MenuItem>
                 <MenuItem Header="_Help">
-                    <MenuItem Header="_About" Click="About_Click" />
+                    <MenuItem Header="_About" Command="{Binding AboutCommand}" />
                 </MenuItem>
             </Menu>
 
             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <Button x:Name="ToggleBoolPanelButton" Width="140" Height="30" Margin="0,0,0,0" Content="Hide Right Panel" Click="ToggleBoolPanel_Click" />
-                <Button x:Name="ToggleBottomPanelButton" Width="180" Height="30" Margin="6,0,0,0" Content="Hide Variable Settings" Click="ToggleBottomPanel_Click" />
-                <Button Width="140" Height="30" Margin="6,0,0,0" Content="Swap Red/Blue Cursors" Click="SwapCursors_Click" />
-                <Button Width="130" Height="30" Margin="6,0,0,0" Content="Previous Change" Click="JumpPrevChange_Click" />
-                <Button Width="120" Height="30" Margin="6,0,0,0" Content="Next Change" Click="JumpNextChange_Click" />
+                <Button Width="140" Height="30" Margin="0,0,0,0" Content="{Binding BoolPanelToggleText}" Command="{Binding ToggleBoolPanelCommand}" />
+                <Button Width="180" Height="30" Margin="6,0,0,0" Content="{Binding BottomPanelToggleText}" Command="{Binding ToggleBottomPanelCommand}" />
+                <Button Width="140" Height="30" Margin="6,0,0,0" Content="Swap Red/Blue Cursors" Command="{Binding SwapCursorsCommand}" />
+                <Button Width="130" Height="30" Margin="6,0,0,0" Content="Previous Change" Command="{Binding JumpPrevChangeCommand}" />
+                <Button Width="120" Height="30" Margin="6,0,0,0" Content="Next Change" Command="{Binding JumpNextChangeCommand}" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
@@ -271,10 +265,10 @@
                         </Grid.RowDefinitions>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center" FontWeight="Bold" Text="BOOL Variables" />
-                            <Button Margin="8,0,0,0" Padding="6,2" Content="Select All" Click="AllBoolOn_Click" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Clear All" Click="AllBoolOff_Click" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Hide No Change" Click="HideNoChangeBool_Click" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Auto Assign Colors" Click="AutoBoolColors_Click" />
+                            <Button Margin="8,0,0,0" Padding="6,2" Content="Select All" Command="{Binding SelectAllBoolCommand}" />
+                            <Button Margin="6,0,0,0" Padding="6,2" Content="Clear All" Command="{Binding ClearAllBoolCommand}" />
+                            <Button Margin="6,0,0,0" Padding="6,2" Content="Hide No Change" Command="{Binding HideNoChangeBoolCommand}" />
+                            <Button Margin="6,0,0,0" Padding="6,2" Content="Auto Assign Colors" Command="{Binding AutoBoolColorsCommand}" />
                         </StackPanel>
                         <ListView x:Name="BoolSignalsListBox"
                                   Grid.Row="1"
@@ -356,9 +350,9 @@
                         </Grid.RowDefinitions>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center" FontWeight="Bold" Text="Value Variables" />
-                            <Button Margin="8,0,0,0" Padding="6,2" Content="Select All" Click="AllValueOn_Click" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Clear All" Click="AllValueOff_Click" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Hide No Change" Click="HideNoChangeValue_Click" />
+                            <Button Margin="8,0,0,0" Padding="6,2" Content="Select All" Command="{Binding SelectAllValueCommand}" />
+                            <Button Margin="6,0,0,0" Padding="6,2" Content="Clear All" Command="{Binding ClearAllValueCommand}" />
+                            <Button Margin="6,0,0,0" Padding="6,2" Content="Hide No Change" Command="{Binding HideNoChangeValueCommand}" />
                         </StackPanel>
                         <ListView x:Name="ValueSignalsListBox"
                                   Grid.Row="1"

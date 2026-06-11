@@ -6,7 +6,6 @@ using System.Windows.Media;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Axes;
-using OxyPlot.Series;
 using SysmacDataTraceViewer.Models;
 using SysmacDataTraceViewer.Services;
 using SysmacDataTraceViewer.ViewModels;
@@ -18,12 +17,6 @@ namespace SysmacDataTraceViewer;
 internal sealed partial class MainWindow : Window
 {
     // Core plotting/state orchestration for the main window.
-    private const double PlotLeftMargin = 16;
-    private const double PlotTopMargin = 8;
-    private const double PlotRightMargin = 12;
-    private const double PlotBottomMargin = 50;
-    private const string CsvFileFilter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*";
-    private const string PngFileFilter = "PNG image (*.png)|*.png";
     private const string NoChangeSuffix = " [No Change]";
     private const string HideVariableSettingsText = "Hide Variable Settings";
     private const string ShowVariableSettingsText = "Show Variable Settings";
@@ -35,6 +28,7 @@ internal sealed partial class MainWindow : Window
     private const string LoadTraceFirstMessage = "Load a trace CSV first.";
 
     private readonly MainViewModel _viewModel = new();
+    private readonly IDialogService _dialogService;
     private TraceData? _traceData;
     private LineAnnotation? _cursorAnnotation;
     private LineAnnotation? _deltaCursorAnnotation;
@@ -54,16 +48,12 @@ internal sealed partial class MainWindow : Window
     private Point _valueListDragStartPoint;
     private bool _allowBoolSelectionFromNameLane;
     private bool _suppressBoolSelectionEvent;
+    private readonly CursorState _cursorState = new();
     private double _dataMinX;
     private double _dataMaxX;
     private double _windowSizeX = 1.0;
     private bool _showCommentLabels;
     private bool _showTypeSuffix;
-    private bool _showCursorRangeBand;
-    private double? _cursorX;
-    private double? _deltaCursorX;
-    private int _lastPrimarySampleIndex = -1;
-    private int _lastDeltaSampleIndex = -1;
     private int _lastHoverSignalIndex = -1;
     private int _lastHoverStartIndex = -1;
     private int _lastHoverEndExclusive = -1;
@@ -74,9 +64,16 @@ internal sealed partial class MainWindow : Window
     private bool _jumpScopeSelectedBoolOnly;
     private int? _selectedJumpBoolSignalIndex;
 
-    public MainWindow()
+    public MainWindow() : this(null)
+    {
+    }
+
+    internal MainWindow(IDialogService? dialogService)
     {
         InitializeComponent();
+        _dialogService = dialogService ?? new WpfDialogService(this);
+        ConfigureViewModelCommands();
+        _viewModel.PropertyChanged += MainViewModel_PropertyChanged;
         DataContext = _viewModel;
         CreateEmptyPlot();
         TracePlot.PreviewMouseLeftButtonDown += TracePlot_PreviewMouseLeftButtonDown;
@@ -86,6 +83,53 @@ internal sealed partial class MainWindow : Window
         TracePlot.PreviewMouseRightButtonUp += TracePlot_PreviewMouseRightButtonUp;
         TracePlot.MouseLeave += TracePlot_MouseLeave;
         NameLaneScrollViewer.SizeChanged += (_, _) => UpdateNameLaneScrollBar();
+    }
+
+    private void ConfigureViewModelCommands()
+    {
+        _viewModel.ConfigureCommands(new MainViewModelCommands
+        {
+            OpenTrace = () => LoadCsv_Click(this, new RoutedEventArgs()),
+            ExportVisiblePng = () => SavePng_Click(this, new RoutedEventArgs()),
+            ExportFullPng = () => SavePngFullRange_Click(this, new RoutedEventArgs()),
+            LoadComments = () => LoadComments_Click(this, new RoutedEventArgs()),
+            SaveComments = () => SaveComments_Click(this, new RoutedEventArgs()),
+            Close = () => Close_Click(this, new RoutedEventArgs()),
+            About = () => About_Click(this, new RoutedEventArgs()),
+            ToggleBoolPanel = () => ToggleBoolPanel_Click(this, new RoutedEventArgs()),
+            ToggleBottomPanel = () => ToggleBottomPanel_Click(this, new RoutedEventArgs()),
+            SwapCursors = () => SwapCursors_Click(this, new RoutedEventArgs()),
+            JumpPrevChange = () => JumpPrevChange_Click(this, new RoutedEventArgs()),
+            JumpNextChange = () => JumpNextChange_Click(this, new RoutedEventArgs()),
+            SelectAllBool = () => AllBoolOn_Click(this, new RoutedEventArgs()),
+            ClearAllBool = () => AllBoolOff_Click(this, new RoutedEventArgs()),
+            HideNoChangeBool = () => HideNoChangeBool_Click(this, new RoutedEventArgs()),
+            AutoBoolColors = () => AutoBoolColors_Click(this, new RoutedEventArgs()),
+            SelectAllValue = () => AllValueOn_Click(this, new RoutedEventArgs()),
+            ClearAllValue = () => AllValueOff_Click(this, new RoutedEventArgs()),
+            HideNoChangeValue = () => HideNoChangeValue_Click(this, new RoutedEventArgs())
+        });
+    }
+
+    private void MainViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainViewModel.ShowTypeSuffix))
+        {
+            _showTypeSuffix = _viewModel.ShowTypeSuffix;
+            UpdateDisplayLabels();
+            if (_traceData is not null)
+            {
+                RedrawWithVisibility();
+            }
+
+            return;
+        }
+
+        if (e.PropertyName == nameof(MainViewModel.ShowRangeBand))
+        {
+            _cursorState.ShowRangeBand = _viewModel.ShowRangeBand;
+            UpdateCursorRangeBand();
+        }
     }
 
     private void ReorderBoolRows(List<string> orderedNames)
@@ -203,84 +247,24 @@ internal sealed partial class MainWindow : Window
 
     private void DrawTrace(TraceData traceData, List<int> visibleSignalIndexes)
     {
-        var model = new PlotModel
+        var model = TracePlotModelBuilder.Build(traceData, visibleSignalIndexes, GetSignalColor);
+        if (model.DefaultXAxis is Axis xAxis)
         {
-            PlotMargins = new OxyThickness(PlotLeftMargin, PlotTopMargin, PlotRightMargin, PlotBottomMargin),
-            IsLegendVisible = false,
-            Background = OxyColors.White
-        };
-
-        var xAxis = new LinearAxis
-        {
-            Position = AxisPosition.Bottom,
-            Title = "Elapsed Time [s]",
-            StringFormat = "0.000",
-            AbsoluteMinimum = traceData.ElapsedSeconds[0],
-            AbsoluteMaximum = traceData.ElapsedSeconds[^1],
-            IsPanEnabled = false,
-            MajorGridlineStyle = LineStyle.Solid,
-            MinorGridlineStyle = LineStyle.Dot
-        };
 #pragma warning disable CS0618
-        xAxis.AxisChanged += XAxis_AxisChanged;
+            xAxis.AxisChanged += XAxis_AxisChanged;
 #pragma warning restore CS0618
-        model.Axes.Add(xAxis);
+        }
 
         var laneNames = visibleSignalIndexes.Select(GetBoolLaneLabel).ToList();
         _visibleBoolSignalIndexes = [.. visibleSignalIndexes];
-        var yAxis = new LinearAxis
-        {
-            Position = AxisPosition.Left,
-            Minimum = -0.5,
-            Maximum = Math.Max(visibleSignalIndexes.Count - 0.5, 0.5),
-            StartPosition = 1,
-            EndPosition = 0,
-            MajorStep = 1.0,
-            MinorStep = 1.0,
-            TickStyle = TickStyle.Outside,
-            IsZoomEnabled = false,
-            IsPanEnabled = false,
-            LabelFormatter = value =>
-            {
-                return string.Empty;
-            }
-        };
-        model.Axes.Add(yAxis);
-
-        for (var laneIndex = 0; laneIndex < visibleSignalIndexes.Count; laneIndex++)
-        {
-            var signalIndex = visibleSignalIndexes[laneIndex];
-            var signal = traceData.BoolSignals[signalIndex];
-            var series = new StairStepSeries
-            {
-                StrokeThickness = 2.4,
-                Color = GetSignalColor(signalIndex)
-            };
-
-            for (var i = 0; i < traceData.SampleCount; i++)
-            {
-                var value = signal.Values[i];
-                if (!value.HasValue)
-                {
-                    continue;
-                }
-
-                // Keep ON state above OFF state in the rendered lane.
-                var y = laneIndex + (value.Value ? -0.32 : 0.32);
-                series.Points.Add(new DataPoint(traceData.ElapsedSeconds[i], y));
-            }
-
-            model.Series.Add(series);
-        }
 
         var firstX = traceData.ElapsedSeconds[0];
-        _cursorX = ClampToTraceRange(_cursorX ?? firstX, traceData);
-        _deltaCursorX = ClampToTraceRange(_deltaCursorX ?? firstX, traceData);
+        _cursorState.InitializeForTrace(traceData);
 
         _cursorAnnotation = new LineAnnotation
         {
             Type = LineAnnotationType.Vertical,
-            X = _cursorX.Value,
+            X = _cursorState.PrimaryX!.Value,
             Color = OxyColors.OrangeRed,
             StrokeThickness = 1.0,
             LineStyle = LineStyle.Solid
@@ -290,7 +274,7 @@ internal sealed partial class MainWindow : Window
         _deltaCursorAnnotation = new LineAnnotation
         {
             Type = LineAnnotationType.Vertical,
-            X = _deltaCursorX.Value,
+            X = _cursorState.DeltaX!.Value,
             Color = OxyColors.MediumBlue,
             StrokeThickness = 1.0,
             LineStyle = LineStyle.Solid
@@ -298,8 +282,8 @@ internal sealed partial class MainWindow : Window
         model.Annotations.Add(_deltaCursorAnnotation);
         _cursorRangeAnnotation = new RectangleAnnotation
         {
-            MinimumX = _cursorX.Value,
-            MaximumX = _cursorX.Value,
+            MinimumX = _cursorState.PrimaryX.Value,
+            MaximumX = _cursorState.PrimaryX.Value,
             MinimumY = -0.5,
             MaximumY = Math.Max(visibleSignalIndexes.Count - 0.5, 0.5),
             Fill = OxyColors.Transparent,
@@ -320,14 +304,15 @@ internal sealed partial class MainWindow : Window
         model.Annotations.Add(_hoverSegmentAnnotation);
         _hoverSegmentActive = false;
 
-        model.ResetAllAxes();
         TracePlot.Model = model;
         _dataMinX = traceData.ElapsedSeconds[0];
         _dataMaxX = traceData.ElapsedSeconds[^1];
         _windowSizeX = _dataMaxX - _dataMinX;
-        NameLaneGrid.Margin = new Thickness(2, PlotTopMargin, 2, PlotBottomMargin);
-        _lastPrimarySampleIndex = TraceNavigationService.FindClosestSample(traceData.ElapsedSeconds, _cursorX.Value);
-        _lastDeltaSampleIndex = TraceNavigationService.FindClosestSample(traceData.ElapsedSeconds, _deltaCursorX.Value);
+        NameLaneGrid.Margin = new Thickness(
+            2,
+            TracePlotModelBuilder.PlotTopMargin,
+            2,
+            TracePlotModelBuilder.PlotBottomMargin);
         _lastHoverSignalIndex = -1;
         _lastHoverStartIndex = -1;
         _lastHoverEndExclusive = -1;
@@ -352,23 +337,18 @@ internal sealed partial class MainWindow : Window
 
     private void SwapCursors_Click(object sender, RoutedEventArgs e)
     {
-        if (_traceData is null || !_cursorX.HasValue || !_deltaCursorX.HasValue)
+        if (_traceData is null || !_cursorState.TrySwap(_traceData))
         {
             return;
         }
 
-        var temp = _cursorX.Value;
-        _cursorX = _deltaCursorX.Value;
-        _deltaCursorX = temp;
-
         if (_deltaCursorAnnotation is not null)
         {
-            _deltaCursorAnnotation.X = _deltaCursorX.Value;
+            _deltaCursorAnnotation.X = _cursorState.DeltaX!.Value;
         }
 
         // Primary cursor drives sampled values, so refresh it from swapped position.
-        var sampleIndex = TraceNavigationService.FindClosestSample(_traceData.ElapsedSeconds, _cursorX.Value);
-        ApplyPrimaryCursorSample(sampleIndex);
+        ApplyPrimaryCursorSample(_cursorState.LastPrimarySampleIndex, force: true);
     }
 
     private bool JumpPrevChangeCore()
@@ -384,7 +364,7 @@ internal sealed partial class MainWindow : Window
             return false;
         }
 
-        var currentIndex = _cursorX.HasValue ? TraceNavigationService.FindClosestSample(_traceData.ElapsedSeconds, _cursorX.Value) : 0;
+        var currentIndex = _cursorState.PrimaryX.HasValue ? TraceNavigationService.FindClosestSample(_traceData.ElapsedSeconds, _cursorState.PrimaryX.Value) : 0;
         var target = TraceNavigationService.FindPreviousChangePoint(_changePointSampleIndexes, currentIndex);
 
         if (target.HasValue)
@@ -409,7 +389,7 @@ internal sealed partial class MainWindow : Window
             return false;
         }
 
-        var currentIndex = _cursorX.HasValue ? TraceNavigationService.FindClosestSample(_traceData.ElapsedSeconds, _cursorX.Value) : 0;
+        var currentIndex = _cursorState.PrimaryX.HasValue ? TraceNavigationService.FindClosestSample(_traceData.ElapsedSeconds, _cursorState.PrimaryX.Value) : 0;
         var target = TraceNavigationService.FindNextChangePoint(_changePointSampleIndexes, currentIndex);
 
         if (target.HasValue)
@@ -427,14 +407,14 @@ internal sealed partial class MainWindow : Window
         {
             if (e.Key == Input.Key.O)
             {
-                LoadCsv_Click(this, new RoutedEventArgs());
+                _viewModel.OpenTraceCommand.Execute(null);
                 e.Handled = true;
                 return;
             }
 
             if (e.Key == Input.Key.E)
             {
-                SavePng_Click(this, new RoutedEventArgs());
+                _viewModel.ExportVisiblePngCommand.Execute(null);
                 e.Handled = true;
                 return;
             }
@@ -453,7 +433,7 @@ internal sealed partial class MainWindow : Window
 
         if (e.Key == Input.Key.Left)
         {
-            _ = JumpPrevChangeCore();
+            _viewModel.JumpPrevChangeCommand.Execute(null);
             // Always handle to prevent focused controls (e.g., ComboBox) from consuming Shift+Arrow.
             e.Handled = true;
             return;
@@ -461,7 +441,7 @@ internal sealed partial class MainWindow : Window
 
         if (e.Key == Input.Key.Right)
         {
-            _ = JumpNextChangeCore();
+            _viewModel.JumpNextChangeCommand.Execute(null);
             // Always handle to prevent focused controls (e.g., ComboBox) from consuming Shift+Arrow.
             e.Handled = true;
         }
@@ -469,10 +449,7 @@ internal sealed partial class MainWindow : Window
 
     private void CreateEmptyPlot()
     {
-        var model = new PlotModel { Background = OxyColors.White };
-        model.Axes.Add(new LinearAxis { Position = AxisPosition.Bottom, Title = "Elapsed Time" });
-        model.Axes.Add(new LinearAxis { Position = AxisPosition.Left, Title = "Signals" });
-        TracePlot.Model = model;
+        TracePlot.Model = TracePlotModelBuilder.BuildEmpty();
     }
 
     private void InitializeValueRows(TraceData traceData)
@@ -745,7 +722,7 @@ internal sealed partial class MainWindow : Window
         BoolPanelSplitter.Visibility = _isBoolPanelVisible ? Visibility.Visible : Visibility.Collapsed;
         BoolPanelSplitterColumn.Width = _isBoolPanelVisible ? new GridLength(6) : new GridLength(0);
         BoolPanelColumn.Width = _isBoolPanelVisible ? new GridLength(320) : new GridLength(0);
-        ToggleBoolPanelButton.Content = _isBoolPanelVisible ? "Hide Right Panel" : "Show Right Panel";
+        _viewModel.BoolPanelToggleText = _isBoolPanelVisible ? "Hide Right Panel" : "Show Right Panel";
     }
 
     private void ToggleBottomPanel_Click(object sender, RoutedEventArgs e)
@@ -756,7 +733,7 @@ internal sealed partial class MainWindow : Window
         BottomPanelSplitterRow.Height = _isBottomPanelVisible ? new GridLength(6) : new GridLength(0);
         BottomPanelRow.MinHeight = _isBottomPanelVisible ? 140 : 0;
         BottomPanelRow.Height = _isBottomPanelVisible ? new GridLength(2, GridUnitType.Star) : new GridLength(0);
-        ToggleBottomPanelButton.Content = _isBottomPanelVisible ? HideVariableSettingsText : ShowVariableSettingsText;
+        _viewModel.BottomPanelToggleText = _isBottomPanelVisible ? HideVariableSettingsText : ShowVariableSettingsText;
     }
 
     private void BoolSignalsListBox_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -927,16 +904,6 @@ internal sealed partial class MainWindow : Window
         }
     }
 
-    private void ShowTypeSuffixCheckBox_Changed(object sender, RoutedEventArgs e)
-    {
-        _showTypeSuffix = ShowTypeSuffixMenuItem.IsChecked;
-        UpdateDisplayLabels();
-        if (_traceData is not null)
-        {
-            RedrawWithVisibility();
-        }
-    }
-
     private void JumpScopeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (JumpScopeComboBox is null)
@@ -990,12 +957,6 @@ internal sealed partial class MainWindow : Window
         }
 
         RefreshChangePointIndexes();
-    }
-
-    private void RangeBandCheckBox_Changed(object sender, RoutedEventArgs e)
-    {
-        _showCursorRangeBand = ShowRangeBandMenuItem.IsChecked;
-        UpdateCursorRangeBand();
     }
 
     private void TimeScrollBar_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

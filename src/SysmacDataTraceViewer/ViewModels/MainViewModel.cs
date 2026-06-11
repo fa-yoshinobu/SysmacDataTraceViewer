@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 
 namespace SysmacDataTraceViewer.ViewModels;
 
@@ -13,7 +14,11 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private string _cursorDeltaText = "-";
     private string _hoverStateText = "-";
     private string _hoverDurationText = "-";
+    private string _boolPanelToggleText = "Hide Right Panel";
+    private string _bottomPanelToggleText = "Hide Variable Settings";
     private bool _isSelectedBoolJumpMode;
+    private bool _showTypeSuffix;
+    private bool _showRangeBand;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -65,20 +70,136 @@ internal sealed class MainViewModel : INotifyPropertyChanged
         set => SetProperty(ref _isSelectedBoolJumpMode, value);
     }
 
+    public bool ShowTypeSuffix
+    {
+        get => _showTypeSuffix;
+        set => SetProperty(ref _showTypeSuffix, value);
+    }
+
+    public bool ShowRangeBand
+    {
+        get => _showRangeBand;
+        set => SetProperty(ref _showRangeBand, value);
+    }
+
+    public string BoolPanelToggleText
+    {
+        get => _boolPanelToggleText;
+        set => SetProperty(ref _boolPanelToggleText, value);
+    }
+
+    public string BottomPanelToggleText
+    {
+        get => _bottomPanelToggleText;
+        set => SetProperty(ref _bottomPanelToggleText, value);
+    }
+
     public ObservableCollection<ValueSignalRow> ValueSignals { get; } = new();
     public ObservableCollection<ValueSignalRow> VisibleValueSignals { get; } = new();
     public ObservableCollection<BoolSignalRow> BoolSignals { get; } = new();
 
-    private void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    public ICommand OpenTraceCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand ExportVisiblePngCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand ExportFullPngCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand LoadCommentsCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand SaveCommentsCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand CloseCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand AboutCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand ToggleBoolPanelCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand ToggleBottomPanelCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand SwapCursorsCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand JumpPrevChangeCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand JumpNextChangeCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand SelectAllBoolCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand ClearAllBoolCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand HideNoChangeBoolCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand AutoBoolColorsCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand SelectAllValueCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand ClearAllValueCommand { get; private set; } = RelayCommand.NoOp;
+    public ICommand HideNoChangeValueCommand { get; private set; } = RelayCommand.NoOp;
+
+    public void ConfigureCommands(MainViewModelCommands commands)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+
+        OpenTraceCommand = new RelayCommand(commands.OpenTrace);
+        ExportVisiblePngCommand = new RelayCommand(commands.ExportVisiblePng);
+        ExportFullPngCommand = new RelayCommand(commands.ExportFullPng);
+        LoadCommentsCommand = new RelayCommand(commands.LoadComments);
+        SaveCommentsCommand = new RelayCommand(commands.SaveComments);
+        CloseCommand = new RelayCommand(commands.Close);
+        AboutCommand = new RelayCommand(commands.About);
+        ToggleBoolPanelCommand = new RelayCommand(commands.ToggleBoolPanel);
+        ToggleBottomPanelCommand = new RelayCommand(commands.ToggleBottomPanel);
+        SwapCursorsCommand = new RelayCommand(commands.SwapCursors);
+        JumpPrevChangeCommand = new RelayCommand(commands.JumpPrevChange);
+        JumpNextChangeCommand = new RelayCommand(commands.JumpNextChange);
+        SelectAllBoolCommand = new RelayCommand(commands.SelectAllBool);
+        ClearAllBoolCommand = new RelayCommand(commands.ClearAllBool);
+        HideNoChangeBoolCommand = new RelayCommand(commands.HideNoChangeBool);
+        AutoBoolColorsCommand = new RelayCommand(commands.AutoBoolColors);
+        SelectAllValueCommand = new RelayCommand(commands.SelectAllValue);
+        ClearAllValueCommand = new RelayCommand(commands.ClearAllValue);
+        HideNoChangeValueCommand = new RelayCommand(commands.HideNoChangeValue);
+
+        OnPropertyChanged(nameof(OpenTraceCommand));
+        OnPropertyChanged(nameof(ExportVisiblePngCommand));
+        OnPropertyChanged(nameof(ExportFullPngCommand));
+        OnPropertyChanged(nameof(LoadCommentsCommand));
+        OnPropertyChanged(nameof(SaveCommentsCommand));
+        OnPropertyChanged(nameof(CloseCommand));
+        OnPropertyChanged(nameof(AboutCommand));
+        OnPropertyChanged(nameof(ToggleBoolPanelCommand));
+        OnPropertyChanged(nameof(ToggleBottomPanelCommand));
+        OnPropertyChanged(nameof(SwapCursorsCommand));
+        OnPropertyChanged(nameof(JumpPrevChangeCommand));
+        OnPropertyChanged(nameof(JumpNextChangeCommand));
+        OnPropertyChanged(nameof(SelectAllBoolCommand));
+        OnPropertyChanged(nameof(ClearAllBoolCommand));
+        OnPropertyChanged(nameof(HideNoChangeBoolCommand));
+        OnPropertyChanged(nameof(AutoBoolColorsCommand));
+        OnPropertyChanged(nameof(SelectAllValueCommand));
+        OnPropertyChanged(nameof(ClearAllValueCommand));
+        OnPropertyChanged(nameof(HideNoChangeValueCommand));
+    }
+
+    private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
     {
         if (EqualityComparer<T>.Default.Equals(field, value))
         {
-            return;
+            return false;
         }
 
         field = value;
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        OnPropertyChanged(propertyName);
+        return true;
     }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
+
+internal sealed class MainViewModelCommands
+{
+    public required Action OpenTrace { get; init; }
+    public required Action ExportVisiblePng { get; init; }
+    public required Action ExportFullPng { get; init; }
+    public required Action LoadComments { get; init; }
+    public required Action SaveComments { get; init; }
+    public required Action Close { get; init; }
+    public required Action About { get; init; }
+    public required Action ToggleBoolPanel { get; init; }
+    public required Action ToggleBottomPanel { get; init; }
+    public required Action SwapCursors { get; init; }
+    public required Action JumpPrevChange { get; init; }
+    public required Action JumpNextChange { get; init; }
+    public required Action SelectAllBool { get; init; }
+    public required Action ClearAllBool { get; init; }
+    public required Action HideNoChangeBool { get; init; }
+    public required Action AutoBoolColors { get; init; }
+    public required Action SelectAllValue { get; init; }
+    public required Action ClearAllValue { get; init; }
+    public required Action HideNoChangeValue { get; init; }
 }
 
 internal sealed class ValueSignalRow : INotifyPropertyChanged

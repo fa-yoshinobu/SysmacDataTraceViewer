@@ -1,7 +1,6 @@
 using System.IO;
 using System.Security;
 using System.Windows;
-using Microsoft.Win32;
 using OxyPlot;
 using OxyPlot.Wpf;
 using SysmacDataTraceViewer.Services;
@@ -13,20 +12,19 @@ internal partial class MainWindow
     // File I/O actions: load/save CSV, comments, PNG export.
     private void LoadCsv_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = CreateCsvOpenDialog();
-
-        if (dialog.ShowDialog(this) != true)
+        var fileName = _dialogService.ShowOpenCsvFileDialog();
+        if (fileName is null)
         {
             return;
         }
 
         try
         {
-            _traceData = CsvTraceParser.Parse(dialog.FileName);
+            _traceData = CsvTraceParser.Parse(fileName);
             ApplyAutoColors(_traceData.BoolSignals.Count);
             InitializeBoolRows(_traceData);
             InitializeValueRows(_traceData);
-            TryAutoLoadComments(dialog.FileName);
+            TryAutoLoadComments(fileName);
             DrawTrace(_traceData, GetVisibleBoolIndexes());
             _viewModel.CursorTimeText = "-";
             _viewModel.CursorClockText = "-";
@@ -39,31 +37,31 @@ internal partial class MainWindow
         }
         catch (InvalidDataException ex)
         {
-            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, CsvLoadErrorTitle);
         }
         catch (IOException ex)
         {
-            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, CsvLoadErrorTitle);
         }
         catch (UnauthorizedAccessException ex)
         {
-            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, CsvLoadErrorTitle);
         }
         catch (SecurityException ex)
         {
-            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, CsvLoadErrorTitle);
         }
         catch (FormatException ex)
         {
-            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, CsvLoadErrorTitle);
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, CsvLoadErrorTitle);
         }
         catch (NotSupportedException ex)
         {
-            MessageBox.Show(this, ex.Message, CsvLoadErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, CsvLoadErrorTitle);
         }
     }
 
@@ -85,8 +83,8 @@ internal partial class MainWindow
         }
 
         var defaultName = visibleRangeOnly ? "trace_visible.png" : "trace_full.png";
-        var dialog = CreatePngSaveDialog(defaultName);
-        if (dialog.ShowDialog(this) != true)
+        var fileName = _dialogService.ShowSavePngFileDialog(defaultName);
+        if (fileName is null)
         {
             return;
         }
@@ -138,7 +136,7 @@ internal partial class MainWindow
 
             try
             {
-                using var stream = File.Create(dialog.FileName);
+                using var stream = File.Create(fileName);
                 var exporter = new PngExporter { Width = 1800, Height = 900 };
                 exporter.Export(model, stream);
             }
@@ -168,27 +166,27 @@ internal partial class MainWindow
         }
         catch (IOException ex)
         {
-            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, PngExportErrorTitle);
         }
         catch (UnauthorizedAccessException ex)
         {
-            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, PngExportErrorTitle);
         }
         catch (SecurityException ex)
         {
-            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, PngExportErrorTitle);
         }
         catch (InvalidOperationException ex)
         {
-            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, PngExportErrorTitle);
         }
         catch (ArgumentException ex)
         {
-            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, PngExportErrorTitle);
         }
         catch (NotSupportedException ex)
         {
-            MessageBox.Show(this, ex.Message, PngExportErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+            _dialogService.ShowError(ex.Message, PngExportErrorTitle);
         }
     }
 
@@ -196,14 +194,13 @@ internal partial class MainWindow
     {
         if (_traceData is null)
         {
-            MessageBox.Show(this, LoadTraceFirstMessage, SaveCommentsTitle, MessageBoxButton.OK, MessageBoxImage.Information);
+            _dialogService.ShowInformation(LoadTraceFirstMessage, SaveCommentsTitle);
             return;
         }
 
         var suggestedName = $"{Path.GetFileNameWithoutExtension(_traceData.FileName)}_comments.csv";
-        var dialog = CreateCsvSaveDialog(suggestedName);
-
-        if (dialog.ShowDialog(this) != true)
+        var fileName = _dialogService.ShowSaveCsvFileDialog(suggestedName);
+        if (fileName is null)
         {
             return;
         }
@@ -215,25 +212,24 @@ internal partial class MainWindow
             .Select((row, index) => new CommentSignalState(row.Name, row.CommentText, row.IsVisible, string.Empty, index))
             .ToList();
 
-        CommentCsvService.Save(dialog.FileName, boolStates, valueStates);
+        CommentCsvService.Save(fileName, boolStates, valueStates);
     }
 
     private void LoadComments_Click(object sender, RoutedEventArgs e)
     {
         if (_traceData is null)
         {
-            MessageBox.Show(this, LoadTraceFirstMessage, LoadCommentsTitle, MessageBoxButton.OK, MessageBoxImage.Information);
+            _dialogService.ShowInformation(LoadTraceFirstMessage, LoadCommentsTitle);
             return;
         }
 
-        var dialog = CreateCsvOpenDialog();
-
-        if (dialog.ShowDialog(this) != true)
+        var fileName = _dialogService.ShowOpenCsvFileDialog();
+        if (fileName is null)
         {
             return;
         }
 
-        ApplyCommentsFromFile(dialog.FileName, showErrorDialog: true);
+        ApplyCommentsFromFile(fileName, showErrorDialog: true);
     }
 
     private void About_Click(object sender, RoutedEventArgs e)
@@ -246,29 +242,6 @@ internal partial class MainWindow
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
-
-    private static OpenFileDialog CreateCsvOpenDialog() =>
-        new()
-        {
-            Filter = CsvFileFilter,
-            CheckFileExists = true
-        };
-
-    private static SaveFileDialog CreateCsvSaveDialog(string fileName) =>
-        new()
-        {
-            Filter = CsvFileFilter,
-            FileName = fileName,
-            OverwritePrompt = true
-        };
-
-    private static SaveFileDialog CreatePngSaveDialog(string fileName) =>
-        new()
-        {
-            Filter = PngFileFilter,
-            FileName = fileName,
-            OverwritePrompt = true
-        };
 
     private void TryAutoLoadComments(string traceCsvPath)
     {
@@ -308,49 +281,49 @@ internal partial class MainWindow
         {
             if (showErrorDialog)
             {
-                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(ex.Message, LoadCommentsErrorTitle);
             }
         }
         catch (IOException ex)
         {
             if (showErrorDialog)
             {
-                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(ex.Message, LoadCommentsErrorTitle);
             }
         }
         catch (UnauthorizedAccessException ex)
         {
             if (showErrorDialog)
             {
-                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(ex.Message, LoadCommentsErrorTitle);
             }
         }
         catch (SecurityException ex)
         {
             if (showErrorDialog)
             {
-                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(ex.Message, LoadCommentsErrorTitle);
             }
         }
         catch (FormatException ex)
         {
             if (showErrorDialog)
             {
-                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(ex.Message, LoadCommentsErrorTitle);
             }
         }
         catch (ArgumentException ex)
         {
             if (showErrorDialog)
             {
-                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(ex.Message, LoadCommentsErrorTitle);
             }
         }
         catch (NotSupportedException ex)
         {
             if (showErrorDialog)
             {
-                MessageBox.Show(this, ex.Message, LoadCommentsErrorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+                _dialogService.ShowError(ex.Message, LoadCommentsErrorTitle);
             }
         }
     }

@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Windows;
 using OxyPlot;
-using SysmacDataTraceViewer.Models;
 using SysmacDataTraceViewer.Services;
 
 namespace SysmacDataTraceViewer;
@@ -56,16 +55,14 @@ internal partial class MainWindow
             return;
         }
 
-        if (sampleIndex == _lastDeltaSampleIndex)
+        if (!_cursorState.TryMoveDeltaToSample(_traceData, sampleIndex))
         {
             return;
         }
 
-        _lastDeltaSampleIndex = sampleIndex;
-        _deltaCursorX = _traceData.ElapsedSeconds[sampleIndex];
         if (_deltaCursorAnnotation is not null)
         {
-            _deltaCursorAnnotation.X = _deltaCursorX.Value;
+            _deltaCursorAnnotation.X = _cursorState.DeltaX!.Value;
             model.InvalidatePlot(false);
         }
 
@@ -75,33 +72,36 @@ internal partial class MainWindow
 
     private void UpdateCursorDeltaText()
     {
-        if (!_cursorX.HasValue || !_deltaCursorX.HasValue)
+        if (!_cursorState.PrimaryX.HasValue || !_cursorState.DeltaX.HasValue)
         {
             _viewModel.CursorDeltaText = "-";
             return;
         }
 
-        var delta = Math.Abs(_deltaCursorX.Value - _cursorX.Value);
+        var delta = Math.Abs(_cursorState.DeltaX.Value - _cursorState.PrimaryX.Value);
         var span = TimeSpan.FromSeconds(delta);
         _viewModel.CursorDeltaText = span.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture);
     }
 
     private void UpdateCursorRangeBand()
     {
-        if (_cursorRangeAnnotation is null || !_cursorX.HasValue || !_deltaCursorX.HasValue || _visibleBoolSignalIndexes.Count == 0)
+        if (_cursorRangeAnnotation is null ||
+            !_cursorState.PrimaryX.HasValue ||
+            !_cursorState.DeltaX.HasValue ||
+            _visibleBoolSignalIndexes.Count == 0)
         {
             return;
         }
 
-        if (!_showCursorRangeBand)
+        if (!_cursorState.ShowRangeBand)
         {
             _cursorRangeAnnotation.Fill = OxyColors.Transparent;
             TracePlot.Model?.InvalidatePlot(false);
             return;
         }
 
-        var minX = Math.Min(_cursorX.Value, _deltaCursorX.Value);
-        var maxX = Math.Max(_cursorX.Value, _deltaCursorX.Value);
+        var minX = Math.Min(_cursorState.PrimaryX.Value, _cursorState.DeltaX.Value);
+        var maxX = Math.Max(_cursorState.PrimaryX.Value, _cursorState.DeltaX.Value);
         _cursorRangeAnnotation.MinimumX = minX;
         _cursorRangeAnnotation.MaximumX = Math.Max(maxX, minX + 1e-6);
         _cursorRangeAnnotation.MinimumY = -0.5;
@@ -110,47 +110,28 @@ internal partial class MainWindow
         TracePlot.Model?.InvalidatePlot(false);
     }
 
-    private static double ClampToTraceRange(double value, TraceData traceData)
-    {
-        var min = traceData.ElapsedSeconds[0];
-        var max = traceData.ElapsedSeconds[^1];
-        if (value < min)
-        {
-            return min;
-        }
-
-        if (value > max)
-        {
-            return max;
-        }
-
-        return value;
-    }
-
-    private void ApplyPrimaryCursorSample(int sampleIndex)
+    private void ApplyPrimaryCursorSample(int sampleIndex, bool force = false)
     {
         if (_traceData is null || TracePlot.Model is null || sampleIndex < 0 || sampleIndex >= _traceData.SampleCount)
         {
             return;
         }
 
-        if (sampleIndex == _lastPrimarySampleIndex)
+        if (!force && !_cursorState.TryMovePrimaryToSample(_traceData, sampleIndex))
         {
             return;
         }
 
-        _lastPrimarySampleIndex = sampleIndex;
         var elapsed = TimeSpan.FromSeconds(_traceData.ElapsedSeconds[sampleIndex]);
         _viewModel.CursorTimeText = elapsed.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture);
         _viewModel.CursorClockText = UiFormattingService.BuildOriginalTimeText(_traceData, sampleIndex);
         _viewModel.CursorSampleText = sampleIndex.ToString(CultureInfo.InvariantCulture);
         UpdateValueRows(_traceData, sampleIndex);
         UpdateNameLaneValues(sampleIndex);
-        _cursorX = _traceData.ElapsedSeconds[sampleIndex];
 
         if (_cursorAnnotation is not null)
         {
-            _cursorAnnotation.X = _cursorX.Value;
+            _cursorAnnotation.X = _cursorState.PrimaryX!.Value;
             TracePlot.Model.InvalidatePlot(false);
         }
 
