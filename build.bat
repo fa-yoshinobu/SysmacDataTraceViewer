@@ -30,7 +30,7 @@ if "%DO_CLEAN%"=="1" (
 )
 
 echo [1/3] restore...
-dotnet restore "%PROJECT%"
+dotnet restore "%PROJECT%" -r %RUNTIME%
 if errorlevel 1 goto :error
 
 echo [2/3] publish single-file exe...
