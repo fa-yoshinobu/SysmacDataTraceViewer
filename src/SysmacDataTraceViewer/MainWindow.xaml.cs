@@ -419,15 +419,7 @@ internal sealed partial class MainWindow : Window
         }
 
         var currentIndex = _cursorX.HasValue ? TraceNavigationService.FindClosestSample(_traceData.ElapsedSeconds, _cursorX.Value) : 0;
-        int? target = null;
-        for (var i = _changePointSampleIndexes.Count - 1; i >= 0; i--)
-        {
-            if (_changePointSampleIndexes[i] < currentIndex)
-            {
-                target = _changePointSampleIndexes[i];
-                break;
-            }
-        }
+        var target = TraceNavigationService.FindPreviousChangePoint(_changePointSampleIndexes, currentIndex);
 
         if (target.HasValue)
         {
@@ -452,15 +444,7 @@ internal sealed partial class MainWindow : Window
         }
 
         var currentIndex = _cursorX.HasValue ? TraceNavigationService.FindClosestSample(_traceData.ElapsedSeconds, _cursorX.Value) : 0;
-        int? target = null;
-        for (var i = 0; i < _changePointSampleIndexes.Count; i++)
-        {
-            if (_changePointSampleIndexes[i] > currentIndex)
-            {
-                target = _changePointSampleIndexes[i];
-                break;
-            }
-        }
+        var target = TraceNavigationService.FindNextChangePoint(_changePointSampleIndexes, currentIndex);
 
         if (target.HasValue)
         {

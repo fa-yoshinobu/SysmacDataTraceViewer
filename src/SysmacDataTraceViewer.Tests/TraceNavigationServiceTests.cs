@@ -36,4 +36,18 @@ public sealed class TraceNavigationServiceTests
         Assert.Equal(2, TraceNavigationService.FindClosestSample([1.0, 2.0, 4.0], 10.0));
         Assert.Equal(1, TraceNavigationService.FindClosestSample([1.0, 2.0, 4.0], 3.0));
     }
+
+    [Fact]
+    public void FindPreviousAndNextChangePointUseStrictCurrentSampleBoundaries()
+    {
+        int[] points = [2, 5, 8];
+
+        Assert.Null(TraceNavigationService.FindPreviousChangePoint(points, 2));
+        Assert.Equal(2, TraceNavigationService.FindPreviousChangePoint(points, 3));
+        Assert.Equal(5, TraceNavigationService.FindPreviousChangePoint(points, 8));
+
+        Assert.Equal(5, TraceNavigationService.FindNextChangePoint(points, 2));
+        Assert.Equal(8, TraceNavigationService.FindNextChangePoint(points, 5));
+        Assert.Null(TraceNavigationService.FindNextChangePoint(points, 8));
+    }
 }

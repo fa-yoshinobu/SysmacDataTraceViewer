@@ -82,4 +82,30 @@ internal static class TraceNavigationService
         var prev = next - 1;
         return Math.Abs(values[prev] - x) <= Math.Abs(values[next] - x) ? prev : next;
     }
+
+    public static int? FindPreviousChangePoint(IReadOnlyList<int> changePointSampleIndexes, int currentSampleIndex)
+    {
+        for (var i = changePointSampleIndexes.Count - 1; i >= 0; i--)
+        {
+            if (changePointSampleIndexes[i] < currentSampleIndex)
+            {
+                return changePointSampleIndexes[i];
+            }
+        }
+
+        return null;
+    }
+
+    public static int? FindNextChangePoint(IReadOnlyList<int> changePointSampleIndexes, int currentSampleIndex)
+    {
+        for (var i = 0; i < changePointSampleIndexes.Count; i++)
+        {
+            if (changePointSampleIndexes[i] > currentSampleIndex)
+            {
+                return changePointSampleIndexes[i];
+            }
+        }
+
+        return null;
+    }
 }
