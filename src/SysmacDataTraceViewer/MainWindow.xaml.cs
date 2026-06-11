@@ -90,25 +90,8 @@ internal sealed partial class MainWindow : Window
 
     private void ReorderBoolRows(List<string> orderedNames)
     {
-        if (orderedNames.Count == 0)
-        {
-            return;
-        }
-
-        var map = _viewModel.BoolSignals.ToDictionary(static row => row.Name, StringComparer.Ordinal);
-        var ordered = new List<BoolSignalRow>(_viewModel.BoolSignals.Count);
-
-        foreach (var name in orderedNames)
-        {
-            if (map.Remove(name, out var row))
-            {
-                ordered.Add(row);
-            }
-        }
-
-        ordered.AddRange(map.Values);
-
-        if (ordered.Count != _viewModel.BoolSignals.Count)
+        var ordered = SignalOrderingService.BuildOrderedRows(_viewModel.BoolSignals, orderedNames, static row => row.Name);
+        if (ordered is null)
         {
             return;
         }
@@ -122,25 +105,8 @@ internal sealed partial class MainWindow : Window
 
     private void ReorderValueRows(List<string> orderedNames)
     {
-        if (orderedNames.Count == 0)
-        {
-            return;
-        }
-
-        var map = _viewModel.ValueSignals.ToDictionary(static row => row.Name, StringComparer.Ordinal);
-        var ordered = new List<ValueSignalRow>(_viewModel.ValueSignals.Count);
-
-        foreach (var name in orderedNames)
-        {
-            if (map.Remove(name, out var row))
-            {
-                ordered.Add(row);
-            }
-        }
-
-        ordered.AddRange(map.Values);
-
-        if (ordered.Count != _viewModel.ValueSignals.Count)
+        var ordered = SignalOrderingService.BuildOrderedRows(_viewModel.ValueSignals, orderedNames, static row => row.Name);
+        if (ordered is null)
         {
             return;
         }
