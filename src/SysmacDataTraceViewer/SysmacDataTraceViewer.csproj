@@ -26,4 +26,10 @@
   <ItemGroup>
     <EmbeddedResource Include="..\..\LICENSE" Link="LICENSE" LogicalName="SysmacDataTraceViewer.LICENSE" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>SysmacDataTraceViewer.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>

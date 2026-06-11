@@ -246,8 +246,7 @@ internal static class CsvTraceParser
             return null;
         }
 
-        if (typeName.Equals("REAL", StringComparison.OrdinalIgnoreCase) ||
-            typeName.Equals("LREAL", StringComparison.OrdinalIgnoreCase))
+        if (IsFloatingPointType(typeName))
         {
             if (double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedInvariant))
             {
@@ -258,10 +257,53 @@ internal static class CsvTraceParser
             {
                 return parsedCurrent.ToString("G17", CultureInfo.InvariantCulture);
             }
+
+            return null;
+        }
+
+        if (IsIntegerType(typeName))
+        {
+            if (IsUnsignedIntegerType(typeName) &&
+                normalized[0] == '-')
+            {
+                return null;
+            }
+
+            return decimal.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out _)
+                ? normalized
+                : null;
         }
 
         return normalized;
     }
+
+    private static bool IsFloatingPointType(string typeName) =>
+        typeName.Equals("REAL", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("LREAL", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsIntegerType(string typeName) =>
+        typeName.Equals("INT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("BYTE", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("WORD", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("DWORD", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("LWORD", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("SINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("DINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("LINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("USINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("UINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("UDINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("ULINT", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsUnsignedIntegerType(string typeName) =>
+        typeName.Equals("BYTE", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("WORD", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("DWORD", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("LWORD", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("USINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("UINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("UDINT", StringComparison.OrdinalIgnoreCase) ||
+        typeName.Equals("ULINT", StringComparison.OrdinalIgnoreCase);
 
     private static string? NormalizeValue(string? text)
     {

@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SysmacDataTraceViewer", "src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj", "{D17496A8-D28B-4ED2-982F-E489CB0A59BC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SysmacDataTraceViewer.Tests", "src\SysmacDataTraceViewer.Tests\SysmacDataTraceViewer.Tests.csproj", "{FC64A3A8-8A4F-402C-9206-155BFF47FCE1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,6 +16,10 @@ Global
 		{D17496A8-D28B-4ED2-982F-E489CB0A59BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D17496A8-D28B-4ED2-982F-E489CB0A59BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D17496A8-D28B-4ED2-982F-E489CB0A59BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC64A3A8-8A4F-402C-9206-155BFF47FCE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC64A3A8-8A4F-402C-9206-155BFF47FCE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC64A3A8-8A4F-402C-9206-155BFF47FCE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC64A3A8-8A4F-402C-9206-155BFF47FCE1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
