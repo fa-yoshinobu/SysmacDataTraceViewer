@@ -2,8 +2,7 @@
 
 [![Release](https://img.shields.io/github/v/release/fa-yoshinobu/SysmacDataTraceViewer?display_name=tag)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/fa-yoshinobu/SysmacDataTraceViewer/ci.yml?branch=main&label=CI)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/actions/workflows/ci.yml)
-[![Auto Release](https://img.shields.io/github/actions/workflow/status/fa-yoshinobu/SysmacDataTraceViewer/release-single-exe.yml?label=Auto%20Release)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/actions/workflows/release-single-exe.yml)
-[![License](https://img.shields.io/github/license/fa-yoshinobu/SysmacDataTraceViewer)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 Sysmac Studio Data Trace CSV viewer for Windows (.NET WPF).
@@ -21,7 +20,7 @@ It plots `:BOOL` signals as ON/OFF timeline lanes and shows typed value signals 
 
 ### Current Version
 
-- `1.0.3`
+- `1.0.4`
 
 ### Features
 
@@ -39,7 +38,7 @@ It plots `:BOOL` signals as ON/OFF timeline lanes and shows typed value signals 
 
 - BOOL Name Lane `Value` column shows `0/1` at the current cursor sample.
 - Hovering a BOOL signal in the time chart now shows signal name with state (for example `Signal_X: ON`).
-- Version updated to `1.0.3`.
+- Version updated to `1.0.4`.
 
 ### Supported CSV Signal Types
 
@@ -71,7 +70,7 @@ dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
 ### Automated CI / Release
 
 - `CI`: runs on push to `main` and on pull requests. It restores, builds with analyzers enabled, verifies `dotnet format`, and smoke-tests Single EXE publish.
-- `Release Single EXE`: push a tag like `v1.0.3` or `Ver.1.0.3` that matches the project `<Version>` to build the `win-x64` self-contained Single EXE and create a GitHub Release automatically.
+- `Release Single EXE`: push a tag like `v1.0.4` or `Ver.1.0.4` that matches the project `<Version>` to build the `win-x64` self-contained Single EXE and create a GitHub Release automatically.
 - `VirusTotal scan on release`: runs after the GitHub Release is published and appends the VirusTotal result to the release page.
 
 ### Repository
@@ -99,7 +98,7 @@ SysmacDataTraceViewer は、Windows 上で Sysmac Studio の Data Trace CSV を�
 
 ### 現在のバージョン
 
-- `1.0.3`
+- `1.0.4`
 
 ### 主な機能
 
@@ -117,7 +116,7 @@ SysmacDataTraceViewer は、Windows 上で Sysmac Studio の Data Trace CSV を�
 
 - BOOL 名レーンの `Value` 列に、カーソル位置の `0/1` を表示。
 - 時間チャート上で BOOL 信号にホバーした際、信号名つき状態表示（例: `Signal_X: ON`）に対応。
-- バージョンを `1.0.3` に更新。
+- バージョンを `1.0.4` に更新。
 
 ### 対応 CSV 信号型
 
