@@ -13,6 +13,8 @@ on:
 
 jobs:
   release:
+    outputs:
+      release_tag: ${{ steps.publish_release.outputs.release_tag }}
     runs-on: windows-latest
 
     steps:
@@ -81,47 +83,40 @@ jobs:
             -p:DebugSymbols=false `
             -o .\artifacts\release\win-x64
 
-      - name: Prepare release assets
-        id: assets
+      - name: Set up release tools
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.13'
+
+      - name: Prepare ZIP checksum and English release notes
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          $tag = "${{ steps.version.outputs.tag_name }}"
-          $publishDir = Join-Path $PWD "artifacts\release\win-x64"
-          $sourceExe = Join-Path $publishDir "SysmacDataTraceViewer.exe"
-          if (-not (Test-Path $sourceExe)) {
-            throw "Published EXE not found: $sourceExe"
-          }
+          python .github/scripts/release_assets.py prepare --repository "$env:GITHUB_REPOSITORY" --release-tag "$env:RELEASE_TAG" --asset-name SysmacDataTraceViewer-win-x64.zip --file artifacts/release/win-x64/SysmacDataTraceViewer.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          $exeName = "SysmacDataTraceViewer-$tag-win-x64.exe"
-          $hashName = "SHA256SUMS.txt"
-
-          $releaseExe = Join-Path $publishDir $exeName
-          Move-Item -Path $sourceExe -Destination $releaseExe -Force
-
-          $hash = Get-FileHash -Algorithm SHA256 $releaseExe
-          $hashLine = "$($hash.Hash) *$exeName"
-          $hashFile = Join-Path $publishDir $hashName
-          Set-Content -Path $hashFile -Value $hashLine -Encoding Ascii
-
-          "exe_path=$releaseExe" >> $env:GITHUB_OUTPUT
-          "hash_path=$hashFile" >> $env:GITHUB_OUTPUT
-
-      - name: Create or update GitHub release
+      - name: Publish ZIP and checksum
+        id: publish_release
+        shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: pwsh
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          $tag = "${{ steps.version.outputs.tag_name }}"
-          $title = "${{ steps.version.outputs.release_title }}"
-          $assets = @(
-            "${{ steps.assets.outputs.exe_path }}",
-            "${{ steps.assets.outputs.hash_path }}"
-          )
+          $releaseArgs = @('release', 'create', $env:RELEASE_TAG, '--repo', $env:GITHUB_REPOSITORY,
+            '--verify-tag', '--title', "Sysmac Data Trace Viewer $env:RELEASE_TAG", '--notes-file', 'artifacts/release/release-notes.md',
+            'artifacts/release/SysmacDataTraceViewer-win-x64.zip', 'artifacts/release/SysmacDataTraceViewer-win-x64.zip.sha256')
+          if ($env:RELEASE_TAG.Contains('-')) { $releaseArgs += '--prerelease' }
+          gh @releaseArgs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "release_tag=$env:RELEASE_TAG" >> $env:GITHUB_OUTPUT
 
-          gh release view $tag *> $null
-          if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag $assets --clobber
-          }
-          else {
-            gh release create $tag $assets --title $title --generate-notes --verify-tag
-          }
+  check-published-release:
+    needs: release
+    permissions:
+      contents: write
+    uses: ./.github/workflows/virustotal-release.yml
+    with:
+      release_tag: ${{ needs.release.outputs.release_tag }}
+    secrets:
+      VT_API_KEY: ${{ secrets.VT_API_KEY }}
