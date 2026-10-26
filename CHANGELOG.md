@@ -6,6 +6,8 @@ All notable changes are recorded from this point onward.
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-10-27
+
 ### Changed
 
 - Standardized fixed-name Windows ZIP assets, ZIP SHA-256 checksums and English release notes.
