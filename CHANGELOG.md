@@ -6,6 +6,10 @@ All notable changes are recorded from this point onward.
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced the application icon with a two-lane timing chart design that stays readable at small sizes, with 9 sizes from 16 to 256 px.
+
 ## [1.0.5] - 2026-10-27
 
 ### Changed

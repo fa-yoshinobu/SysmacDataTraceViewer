@@ -3,7 +3,7 @@
 [![Release](https://img.shields.io/github/v/release/fa-yoshinobu/SysmacDataTraceViewer?display_name=tag)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/fa-yoshinobu/SysmacDataTraceViewer/ci.yml?branch=main&label=CI)](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![.NET](https://img.shields.io/badge/.NET-8.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/8.0)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
 Sysmac Studio Data Trace CSV viewer for Windows (.NET WPF).
 
