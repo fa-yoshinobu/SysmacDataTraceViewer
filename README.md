@@ -5,170 +5,37 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-Sysmac Studio Data Trace CSV viewer for Windows (.NET WPF).
+Windows上でSysmac StudioのData Trace CSVを確認するWPFアプリです。BOOL信号をON/OFFのタイムラインとして表示し、その他の信号はカーソル位置の値を表示します。
 
----
+![Sysmac Data Trace Viewer](Sysmac%20Data%20Trace%20Viewer.png)
+
+## ダウンロード / Download
+
+[最新版 Windows x64 ZIP](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/latest/download/SysmacDataTraceViewer-win-x64.zip) · [SHA-256](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/latest/download/SysmacDataTraceViewer-win-x64.zip.sha256)
+
+ZIPを展開して`SysmacDataTraceViewer.exe`を起動します。.NETランタイムは同梱しています。最新の公開版は冒頭のReleaseバッジ、変更内容は[変更履歴](CHANGELOG.md)を参照してください。
+
+## 主な機能
+
+- BOOL信号の複数レーン表示、主カーソルと差分カーソル、変化点への移動
+- カーソル位置のBOOL値・数値・日付・時刻などの表示と、BOOL状態・継続時間のホバー表示
+- 信号の表示切替、変化しない信号の非表示、リストのドラッグによる並び替え
+- 変数名／コメントのラベル切替と、BOOLごとの色設定
+- 表示範囲／全範囲のPNG出力
+- コメント・表示・色・順序のコメントCSV保存と読込み
+
+対応する信号型、操作、ショートカットは[仕様書](docs/spec.md)を参照してください。
+
+## 開発・保守
+
+[開発・ビルド・CI・リリース手順](docs/development.md) · [大容量CSVの計測](docs/large-csv-benchmark.md) · [TODO](TODO.md)
 
 ## English
 
-### Overview
+A Windows WPF viewer for Sysmac Studio Data Trace CSV files. BOOL signals appear as ON/OFF timeline lanes; other typed signals are shown at the cursor. It supports primary/delta cursors, signal ordering, visibility, colors, comment CSV files, and PNG export.
 
-SysmacDataTraceViewer visualizes Sysmac Studio trace CSV files on Windows.
-It plots `:BOOL` signals as ON/OFF timeline lanes and shows typed value signals at the cursor position.
+Use the ZIP and checksum links above, extract the ZIP, and run `SysmacDataTraceViewer.exe`. The .NET runtime is included. See the [specification](docs/spec.md) for supported types and shortcuts, and the [changelog](CHANGELOG.md) for updates.
 
-![Sysmac Data Trace Viewer](Sysmac%20Data%20Trace%20Viewer.png)
+## ライセンス / License
 
-### Current Version
-
-- `1.0.4`
-
-### Features
-
-- BOOL timeline chart (multi-lane ON/OFF visualization)
-- Primary cursor + delta cursor
-- Show/hide BOOL variables and value variables
-- Hide unchanged variables (`[No Change]`)
-- Drag and drop reorder for BOOL/value lists
-- Label mode switch (`Variable Name` / `Comment`)
-- Per-BOOL color setting (`#RRGGBB`)
-- PNG export (visible range / full range)
-- Comment CSV load/save (comment, visibility, color, order)
-
-### Recent Updates
-
-- BOOL Name Lane `Value` column shows `0/1` at the current cursor sample.
-- Hovering a BOOL signal in the time chart now shows signal name with state (for example `Signal_X: ON`).
-- Version updated to `1.0.4`.
-
-### Supported CSV Signal Types
-
-- Timeline: `:BOOL`
-- Value panel: `:INT`, `:BYTE`, `:WORD`, `:DWORD`, `:LWORD`, `:SINT`, `:DINT`, `:LINT`, `:USINT`, `:UINT`, `:UDINT`, `:ULINT`, `:REAL`, `:LREAL`, `:TIME`, `:DATE`, `:TIME_OF_DAY`, `:DATE_AND_TIME`
-
-### Build
-
-```powershell
-ci.bat
-```
-
-### Publish (Single EXE)
-
-```powershell
-build.bat
-```
-
-Or run the publish command directly:
-
-```powershell
-dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
-  -c Release -r win-x64 `
-  -p:PublishSingleFile=true `
-  -p:SelfContained=true `
-  -o .\artifacts\publish
-```
-
-### Automated CI / Release
-
-- `CI`: runs on push to `main` and on pull requests. It runs `ci.bat`: restore, build with warnings as errors, unit tests, `dotnet format`, and Single EXE publish verification.
-- `Release Single EXE`: push a `vMAJOR.MINOR.PATCH` tag that matches the project `<Version>` to build and test the `win-x64` self-contained Single EXE and create a GitHub Release automatically.
-- `VirusTotal scan on release`: runs after the GitHub Release is published and appends the VirusTotal result to the release page.
-
-### Repository
-
-- GitHub: https://github.com/fa-yoshinobu/SysmacDataTraceViewer
-
-### Spec
-
-- [docs/spec.md](docs/spec.md)
-
-### License
-
-MIT License. See `LICENSE`.
-
----
-
-## 日本語
-
-### 概要
-
-SysmacDataTraceViewer は、Windows 上で Sysmac Studio の Data Trace CSV を可視化するツールです。  
-`:BOOL` 信号は ON/OFF のタイムラインとして表示し、その他の型はカーソル位置の値として表示します。
-
-![Sysmac Data Trace Viewer](Sysmac%20Data%20Trace%20Viewer.png)
-
-### 現在のバージョン
-
-- `1.0.4`
-
-### 主な機能
-
-- BOOL タイムライン（複数レーンの ON/OFF 表示）
-- 主カーソル + 差分カーソル
-- BOOL 変数 / 値変数の表示切り替え
-- 変化なし変数の非表示（`[No Change]`）
-- BOOL/値リストのドラッグ&ドロップ並び替え
-- ラベル表示切り替え（`Variable Name` / `Comment`）
-- BOOL ごとの色設定（`#RRGGBB`）
-- PNG 出力（表示範囲 / 全範囲）
-- コメント CSV の読み込み/保存（コメント・表示・色・順序）
-
-### 最近の更新
-
-- BOOL 名レーンの `Value` 列に、カーソル位置の `0/1` を表示。
-- 時間チャート上で BOOL 信号にホバーした際、信号名つき状態表示（例: `Signal_X: ON`）に対応。
-- バージョンを `1.0.4` に更新。
-
-### 対応 CSV 信号型
-
-- タイムライン: `:BOOL`
-- 値パネル: `:INT`, `:BYTE`, `:WORD`, `:DWORD`, `:LWORD`, `:SINT`, `:DINT`, `:LINT`, `:USINT`, `:UINT`, `:UDINT`, `:ULINT`, `:REAL`, `:LREAL`, `:TIME`, `:DATE`, `:TIME_OF_DAY`, `:DATE_AND_TIME`
-
-### ビルド
-
-```powershell
-ci.bat
-```
-
-### 配布（単一 EXE）
-
-```powershell
-build.bat
-```
-
-または、publish コマンドを直接実行します。
-
-```powershell
-dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
-  -c Release -r win-x64 `
-  -p:PublishSingleFile=true `
-  -p:SelfContained=true `
-  -o .\artifacts\publish
-```
-
-### リポジトリ
-
-- GitHub: https://github.com/fa-yoshinobu/SysmacDataTraceViewer
-
-### 仕様書
-
-- [docs/spec.md](docs/spec.md)
-
-### ライセンス
-
-MIT License。`LICENSE` を参照。
-
-## Release distribution
-
-The fixed-name ZIP and checksum links below are available for the current release. Older releases retain their original assets.
-
-- [Latest Windows x64 ZIP](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/latest/download/SysmacDataTraceViewer-win-x64.zip)
-- [ZIP SHA-256 checksum](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/latest/download/SysmacDataTraceViewer-win-x64.zip.sha256)
-- [Changelog](CHANGELOG.md) / [TODO](TODO.md)
-
-Extract the ZIP file, then run `SysmacDataTraceViewer.exe`.
-
-Windows x64. The .NET runtime is included.
-
-Release notes and VirusTotal scan messages are in English. Existing project documents may keep their current language.
-
-Maintainers: update the English Changes section in `.github/release-notes.md` from the relevant CHANGELOG entries before releasing. The release workflow publishes the ZIP and checksum, then scans the actual published executables. Use the `Scan release with VirusTotal` workflow with a release tag to retry an incomplete scan. See the [shared release standard](https://github.com/fa-yoshinobu/release_standard).
+[MIT License](LICENSE)

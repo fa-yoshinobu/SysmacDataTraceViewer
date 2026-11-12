@@ -1,6 +1,6 @@
 # SysmacDataTraceViewer 改善ゴール
 
-[README](../README.md) · [仕様書](spec.md) · [変更履歴](../CHANGELOG.md) · [リファクタリング計画（Phase 4）](phase4-refactor-plan.md)
+[README](README.md) · [仕様書](docs/spec.md) · [変更履歴](CHANGELOG.md)
 
 v1.0.5（.NET 10 へ移行した時点）のコードレビューに基づく改善項目です。1ゴール＝1つの独立した作業単位で、上から順に着手することを想定しています。
 
@@ -24,7 +24,7 @@ python -m unittest discover -s tests/release
 | G1 | CIとリリースでテストが走る | 高 | 実装・ローカル検証済み／GitHub検証待ち |
 | G2 | 日本語の変数名が文字化けしない | 高 | 実装・架空データ検証済み／実物なし |
 | G3 | 大きな CSV でも画面が固まらない | 高 | 完了（2026-11-12） |
-| G4 | README とバージョンの記述が実態と一致している | 中 | 未着手 |
+| G4 | README とバージョンの記述が実態と一致している | 中 | 完了（2026-11-12） |
 | G5 | 読めなかった行と予期しないエラーが分かる | 中 | 未着手 |
 | G6 | `MainWindow` のコードビハインドを減らす（Phase 4 の続き） | 中 | 未着手 |
 | G7 | ファイルをドロップ・関連付けで開ける | 中 | 未着手 |
@@ -115,13 +115,15 @@ python -m unittest discover -s tests/release
 **対象**: `README.md`、`CHANGELOG.md`、`src/SysmacDataTraceViewer/SysmacDataTraceViewer.csproj`、`.github/release-notes.md`
 
 **完了条件**
-- [ ] README からバージョン番号の直書きをやめる（冒頭のバッジが最新リリースを示している）。「Recent Updates」は変更履歴へのリンクにする。
-- [ ] csproj のバージョンを `Version` の1か所にし、ほかの値はそこから導かれるようにする。発行したEXEのファイルバージョン・製品バージョンが従来と同じ形式で出ることを確認する。
-- [ ] `CHANGELOG.md` に、1.0.1〜1.0.4 の主な変更を追記する（GitHub Releases とコミット履歴から）。
-- [ ] README の英語・日本語の重複を減らす。ダウンロードの案内は1か所にまとめ、保守者向けの手順は別の文書へ移す。
-- [ ] README の例示のタグ（`v1.0.4`）を、特定の版に依存しない書き方にする。
+- [x] README からバージョン番号の直書きをやめる（冒頭のバッジが最新リリースを示している）。「Recent Updates」は変更履歴へのリンクにする。
+- [x] csproj のバージョンを `Version` の1か所にし、ほかの値はそこから導かれるようにする。発行したEXEのファイルバージョン・製品バージョンが従来と同じ形式で出ることを確認する。
+- [x] `CHANGELOG.md` に、1.0.1〜1.0.4 の主な変更を追記する（GitHub Releases とコミット履歴から）。
+- [x] README の英語・日本語の重複を減らす。ダウンロードの案内は1か所にまとめ、保守者向けの手順は別の文書へ移す。
+- [x] README の例示のタグ（`v1.0.4`）を、特定の版に依存しない書き方にする。
 
 **検証**: `1.0.4` で README を検索して0件。`build.bat` で作ったEXEのプロパティにバージョンが正しく出る。
+
+**検証記録（2026-11-12）**: READMEの固定バージョン・Recent Updatesを除去して変更履歴へ誘導し、配布リンクを1か所へ統合。保守手順はdocs/development.mdへ移した。過去4版はGitHub Releaseの公開日とタグ間のコミット・差分から補完した。1.0.2の名前レーン値と信号名付きホバーは8afe258で確認。csprojはVersionだけを製品版の入力とし、発行EXEのFileVersion=1.0.5.0、ProductVersion=1.0.5を確認。README内の1.0.4は0件。ci.batと単体31件、36保守テストが成功。
 
 **対象外**: 仕様書の全面改訂。
 

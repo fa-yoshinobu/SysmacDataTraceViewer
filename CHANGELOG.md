@@ -19,3 +19,36 @@ All notable changes are recorded from this point onward.
 ### Fixed
 
 - Unified VirusTotal completion checks and preserved unrelated release notes during rescans.
+
+## [1.0.4] - 2026-06-15
+
+### Changed
+
+- Extracted plotting, formatting, cursor state and signal ordering into services, with service characterization tests.
+- Updated OxyPlot to 2.2.0 and refreshed test dependencies.
+- Added security support documentation and manual VirusTotal rescans.
+
+## [1.0.3] - 2026-03-28
+
+### Added
+
+- Added analyzer/format verification, GitHub CI, automated releases, and local build/CI batch scripts.
+
+## [1.0.2] - 2026-02-09
+
+### Added
+
+- Displayed the current cursor sample's BOOL value in the name lane.
+- Included the signal label in the hover state display.
+
+## [1.0.1] - 2026-02-06
+
+### Added
+
+- Initial published Windows viewer with BOOL timelines, primary/delta cursors, typed values, signal visibility and ordering, colors, comment CSV files and PNG export.
+
+[1.0.5]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/v1.0.5
+[1.0.4]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/v1.0.4
+[1.0.3]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/v1.0.3
+[1.0.2]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/Ver.1.0.2
+[1.0.1]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/Ver.1.0.1
