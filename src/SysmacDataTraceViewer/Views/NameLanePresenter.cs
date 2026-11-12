@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace SysmacDataTraceViewer.Views;
 
@@ -7,6 +8,12 @@ using SysmacDataTraceViewer.Models;
 
 internal sealed class NameLanePresenter(Grid NameLaneGrid, ScrollViewer NameLaneScrollViewer, System.Windows.Controls.Primitives.ScrollBar NameLaneScrollBar)
 {
+    // Same stripe color as the chart lanes (TracePlotModelBuilder.LaneStripeColor).
+    private static readonly Brush LaneStripeBrush = CreateFrozenBrush(0xF3, 0xF5, 0xF8);
+    private static readonly Brush OnValueBrush = CreateFrozenBrush(0x1B, 0x7F, 0x3B);
+    private static readonly Brush OffValueBrush = CreateFrozenBrush(0x8A, 0x93, 0x9F);
+    private static readonly Brush LabelBrush = CreateFrozenBrush(0x1F, 0x29, 0x37);
+
     private bool _suppressNameLaneScrollEvent;
     private List<int> _visibleBoolSignalIndexes = [];
     private TraceData? _traceData;
@@ -48,7 +55,8 @@ internal sealed class NameLanePresenter(Grid NameLaneGrid, ScrollViewer NameLane
             var signalIndex = _visibleBoolSignalIndexes.Count > i ? _visibleBoolSignalIndexes[i] : -1;
             var rowGrid = new Grid
             {
-                Margin = new Thickness(2, 0, 2, 0)
+                Margin = new Thickness(2, 0, 2, 0),
+                Background = i % 2 == 1 ? LaneStripeBrush : Brushes.Transparent
             };
             rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             rowGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -59,7 +67,10 @@ internal sealed class NameLanePresenter(Grid NameLaneGrid, ScrollViewer NameLane
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(4, 0, 4, 0),
                 Tag = signalIndex,
-                Cursor = System.Windows.Input.Cursors.Hand
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Foreground = LabelBrush,
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                ToolTip = laneNames[i]
             };
             label.MouseLeftButtonDown += NameLaneLabel_MouseLeftButtonDown;
             Grid.SetColumn(label, 0);
@@ -70,8 +81,9 @@ internal sealed class NameLanePresenter(Grid NameLaneGrid, ScrollViewer NameLane
                 Text = "-",
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(8, 0, 2, 0),
+                FontFamily = new FontFamily("Consolas"),
                 FontWeight = FontWeights.SemiBold,
-                Foreground = System.Windows.Media.Brushes.DimGray,
+                Foreground = OffValueBrush,
                 Tag = $"value:{signalIndex}"
             };
             Grid.SetColumn(valueText, 1);
@@ -96,6 +108,7 @@ internal sealed class NameLanePresenter(Grid NameLaneGrid, ScrollViewer NameLane
                 if (valueBlock is not null)
                 {
                     valueBlock.Text = "-";
+                    valueBlock.Foreground = OffValueBrush;
                 }
             }
 
@@ -118,11 +131,13 @@ internal sealed class NameLanePresenter(Grid NameLaneGrid, ScrollViewer NameLane
             if (signalIndex < 0 || signalIndex >= _traceData.BoolSignals.Count)
             {
                 valueBlock.Text = "-";
+                valueBlock.Foreground = OffValueBrush;
                 continue;
             }
 
             var value = _traceData.BoolSignals[signalIndex].Values[sampleIndex];
             valueBlock.Text = value.HasValue ? (value.Value ? "1" : "0") : "-";
+            valueBlock.Foreground = value == true ? OnValueBrush : OffValueBrush;
         }
     }
 
@@ -192,7 +207,7 @@ internal sealed class NameLanePresenter(Grid NameLaneGrid, ScrollViewer NameLane
                     continue;
                 }
 
-                label.Foreground = System.Windows.Media.Brushes.Black;
+                label.Foreground = LabelBrush;
                 label.FontWeight = FontWeights.Normal;
             }
 
@@ -215,9 +230,16 @@ internal sealed class NameLanePresenter(Grid NameLaneGrid, ScrollViewer NameLane
             }
             else
             {
-                label.Foreground = System.Windows.Media.Brushes.Black;
+                label.Foreground = LabelBrush;
                 label.FontWeight = FontWeights.Normal;
             }
         }
+    }
+
+    private static SolidColorBrush CreateFrozenBrush(byte r, byte g, byte b)
+    {
+        var brush = new SolidColorBrush(Color.FromRgb(r, g, b));
+        brush.Freeze();
+        return brush;
     }
 }

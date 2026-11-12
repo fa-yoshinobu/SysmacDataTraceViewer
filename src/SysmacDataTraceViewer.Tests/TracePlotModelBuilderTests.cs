@@ -1,4 +1,5 @@
 using OxyPlot;
+using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using SysmacDataTraceViewer.Models;
@@ -54,6 +55,20 @@ public sealed class TracePlotModelBuilderTests
         AssertPoint(secondSeries.Points[0], 0, 1.32);
         AssertPoint(secondSeries.Points[1], 1, 0.68);
         AssertPoint(secondSeries.Points[2], 2, 0.68);
+    }
+
+    [Fact]
+    public void BuildStripesEveryOtherLaneBelowTheSeries()
+    {
+        var trace = CreateTrace();
+
+        var model = TracePlotModelBuilder.Build(trace, [0, 1, 0], static _ => OxyColors.Black);
+
+        var stripe = Assert.IsType<RectangleAnnotation>(Assert.Single(model.Annotations));
+        Assert.Equal(0.5, stripe.MinimumY);
+        Assert.Equal(1.5, stripe.MaximumY);
+        Assert.Equal(TracePlotModelBuilder.LaneStripeColor, stripe.Fill);
+        Assert.Equal(AnnotationLayer.BelowSeries, stripe.Layer);
     }
 
     [Fact]

@@ -49,10 +49,15 @@ Version date: 2026-02-05
 - Chart axes: pan/zoom disabled; time window is controlled by the horizontal scrollbar.
 
 ### Screen Layout
-- Top: menu bar and toolbar buttons (open/export/toggles, cursor swap, change jump).
-- Top status bar: current load status text.
+- Window title: loaded file name followed by the application name.
+- Top: menu bar, then a toolbar (panel toggles, cursor swap, change jump, label mode, jump scope) that wraps on narrow windows.
+- Cursor readouts below the toolbar, grouped and color-coded: red data cursor (elapsed time, recorded time, sample index), blue delta cursor (cursor delta), and hover state/duration.
+- Top status bar: current load status text. It turns amber with a warning mark and a Read Details button when the CSV had read issues, and shows a progress indicator and Cancel while loading.
+- Bottom footer: mouse and keyboard hints.
+- Before a trace is loaded, the chart shows how to open one (drop a CSV or File > Open Trace CSV).
+- Every other BOOL lane is lightly striped in the chart and in the name lane; the name lane shows ON as a green `1`.
 - Main area (center):
-  - Left: BOOL name lane with horizontal scrollbar.
+  - Left: BOOL name lane with ellipsized labels (full text in the tooltip) and values kept inside the visible width. Its rows align with the chart plotting area, including the plot padding.
   - Center: time chart (OxyPlot).
   - Right: value panel (values at cursor).
 - Bottom: Variable Settings panel (BOOL/Value visibility, color, comment, order).

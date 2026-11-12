@@ -4,5 +4,16 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              >
     <Application.Resources>
+        <!-- Shared palette. Cursor colors match the chart annotations (OrangeRed / MediumBlue). -->
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F3F5F8" />
+        <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="PanelBorderBrush" Color="#D8DDE4" />
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1F2937" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#5B6472" />
+        <SolidColorBrush x:Key="PrimaryCursorBrush" Color="#FF4500" />
+        <SolidColorBrush x:Key="DeltaCursorBrush" Color="#0000CD" />
+        <SolidColorBrush x:Key="WarningBackgroundBrush" Color="#FFF4E0" />
+        <SolidColorBrush x:Key="WarningBorderBrush" Color="#F2C27A" />
+        <SolidColorBrush x:Key="WarningTextBrush" Color="#9A5B00" />
     </Application.Resources>
 </Application>

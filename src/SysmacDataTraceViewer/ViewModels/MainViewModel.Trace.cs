@@ -23,7 +23,11 @@ internal sealed partial class MainViewModel
         IsBottomPanelVisible = !IsBottomPanelVisible;
         BottomPanelToggleText = IsBottomPanelVisible ? "Hide Variable Settings" : "Show Variable Settings";
     }
+    private const string AppTitle = "Sysmac Data Trace Viewer";
+
     public TraceData? TraceData { get; private set; }
+    public bool HasTrace => TraceData is not null;
+    public string WindowTitle => TraceData is null ? AppTitle : $"{TraceData.FileName} - {AppTitle}";
     public bool ShowCommentLabels { get; set; }
     public event Action? RedrawRequested;
 
@@ -32,6 +36,8 @@ internal sealed partial class MainViewModel
     public void InitializeTrace(TraceData trace)
     {
         TraceData = trace;
+        OnPropertyChanged(nameof(HasTrace));
+        OnPropertyChanged(nameof(WindowTitle));
         HasReadIssues = trace.Diagnostics.HasIssues;
         ApplyAutoColors(trace.BoolSignals.Count);
         InitializeBoolRows(trace);

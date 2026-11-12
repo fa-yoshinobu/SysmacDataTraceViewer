@@ -271,9 +271,9 @@ internal sealed partial class MainWindow : Window
         _windowSizeX = _dataMaxX - _dataMinX;
         NameLaneGrid.Margin = new Thickness(
             2,
-            TracePlotModelBuilder.PlotTopMargin,
+            TracePlotModelBuilder.PlotTopMargin + model.Padding.Top,
             2,
-            TracePlotModelBuilder.PlotBottomMargin);
+            TracePlotModelBuilder.PlotBottomMargin + model.Padding.Bottom);
         _lastHoverSignalIndex = -1;
         _lastHoverStartIndex = -1;
         _lastHoverEndExclusive = -1;
