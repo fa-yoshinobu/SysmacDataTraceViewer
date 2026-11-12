@@ -6,6 +6,8 @@ Only the latest public release is supported for security fixes.
 
 Older releases, forks, and locally modified builds may not receive security updates. If you are using a self-contained EXE, update to the latest released build to receive runtime and dependency security fixes.
 
+The bundled runtime is pinned for reproducible builds. A weekly GitHub Actions check compares the pin with Microsoft's release metadata and fails when a newer stable patch is available. Maintainers update the pin, validate, and publish a new application release; an existing EXE does not update its embedded runtime.
+
 ## Reporting a Vulnerability
 
 Please do not disclose security vulnerabilities in public issues, discussions, or pull requests before a fix is available.
@@ -50,6 +52,8 @@ Please allow reasonable time for investigation and release preparation before pu
 セキュリティ修正の対象は、原則として最新の公開リリースのみです。
 
 古いリリース、fork、ローカルで変更されたビルドには、セキュリティ更新が提供されない場合があります。自己完結型 EXE を使用している場合、ランタイムや依存関係のセキュリティ修正を受けるには最新リリースへ更新してください。
+
+同梱ランタイムは再現可能なビルドのため固定します。週次のGitHub ActionsがMicrosoftのリリース情報と比較し、同じ系列の新しい安定版パッチがあれば失敗として通知します。保守者が固定値を更新・検証してアプリを再公開します。配布済みEXEの中のランタイムは自動更新されません。
 
 ## 脆弱性の報告
 

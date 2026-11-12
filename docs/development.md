@@ -47,3 +47,11 @@ python -B -m unittest discover -s tests/release
 | XAMLの状態バインド | ステータス・読込み状態・表示行・操作コマンドは済み。GridのサイズとOxyPlotの操作接続は画面側に残す |
 
 名前レーンの表示処理は専用の `Views/NameLanePresenter` にまとめ、信号選択をMainWindowへ通知する。画面のレイアウトは変えない。
+
+## 同梱ランタイムとPNG
+
+同梱.NETランタイムはcsprojのRuntimeFrameworkVersionで固定する。`python .github/scripts/check_runtime.py` がMicrosoftの公式リリース情報を照合し、新しいパッチがあれば失敗する。週次と手動のGitHub Actionsでも実行する。更新は固定値の変更・共通検証・新しいアプリの公開の順で行い、自動マージや自動リリースは行わない。
+
+PNGは1800×900を維持する。既存の保存結果を再現でき、表示範囲と全範囲の比較にも使うため、今回はサイズ指定の設定を追加しない。
+
+コメントCSVは同じディレクトリの一時ファイルを書き終えてから置き換える。引用符内のCR/LFを保持し、複数行のコメントも読み戻す。

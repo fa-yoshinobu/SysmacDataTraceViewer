@@ -2,6 +2,31 @@ namespace SysmacDataTraceViewer.Services;
 
 internal static class CsvLineParser
 {
+    public static IEnumerable<string> ReadRecords(System.IO.TextReader reader)
+    {
+        var record = new System.Text.StringBuilder();
+        var inQuotes = false;
+        while (reader.Read() is var next && next >= 0)
+        {
+            var c = (char)next;
+            if (c == '"')
+            {
+                record.Append(c);
+                if (inQuotes && reader.Peek() == '"') record.Append((char)reader.Read());
+                else inQuotes = !inQuotes;
+            }
+            else if (!inQuotes && c is '\r' or '\n')
+            {
+                if (c == '\r' && reader.Peek() == '\n') reader.Read();
+                yield return record.ToString();
+                record.Clear();
+            }
+            else record.Append(c);
+        }
+        if (inQuotes) throw new System.IO.InvalidDataException("Comment CSV contains an unterminated quoted field.");
+        if (record.Length > 0) yield return record.ToString();
+    }
+
     public static List<string> Parse(string line)
     {
         var values = new List<string>();

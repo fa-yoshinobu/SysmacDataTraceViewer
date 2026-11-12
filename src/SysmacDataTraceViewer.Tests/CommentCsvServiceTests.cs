@@ -67,6 +67,37 @@ public sealed class CommentCsvServiceTests
         Assert.Equal(int.MaxValue, valueState.Order);
     }
 
+    [Fact]
+    public void MultilineQuotedCommentsRoundTripExactlyAndOverwriteExistingFile()
+    {
+        using var file = new TempFile();
+        File.WriteAllText(file.Path, "old file");
+        var comment = "架空の1行目\r\n2行目, \"quoted\"\n3行目\r末尾";
+        CommentCsvService.Save(file.Path, [new("Fictional:BOOL", comment, true, "#112233", 0)], []);
+        Assert.Equal(comment, Assert.Single(CommentCsvService.Load(file.Path).BoolSignals).Comment);
+        Assert.Single(Directory.GetFiles(Path.GetDirectoryName(file.Path)!));
+    }
+
+    [Fact]
+    public void FailedReplacementKeepsPreviousFileAndRemovesTemporaryFile()
+    {
+        using var file = new TempFile();
+        File.WriteAllText(file.Path, "previous contents");
+        using (var locked = new FileStream(file.Path, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            Assert.Throws<IOException>(() => CommentCsvService.Save(file.Path, [new("Fictional:BOOL", "new", true, "", 0)], []));
+        }
+        Assert.Equal("previous contents", File.ReadAllText(file.Path));
+        Assert.Single(Directory.GetFiles(Path.GetDirectoryName(file.Path)!));
+    }
+
+    [Fact]
+    public void UnterminatedMultilineCommentIsReported()
+    {
+        using var reader = new StringReader("BOOL,A,\"not closed\nnext");
+        Assert.Throws<InvalidDataException>(() => CsvLineParser.ReadRecords(reader).ToList());
+    }
+
     private sealed class TempFile : IDisposable
     {
         private readonly string _directory;

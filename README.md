@@ -7,7 +7,7 @@
 
 Windows上でSysmac StudioのData Trace CSVを確認するWPFアプリです。BOOL信号をON/OFFのタイムラインとして表示し、その他の信号はカーソル位置の値を表示します。
 
-![Sysmac Data Trace Viewer](Sysmac%20Data%20Trace%20Viewer.png)
+![Sysmac Data Trace Viewer](docs/images/sysmac-data-trace-viewer.png)
 
 ## ダウンロード / Download
 

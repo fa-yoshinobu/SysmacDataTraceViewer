@@ -25,14 +25,25 @@ internal static class CommentCsvService
         lines.AddRange(valueSignals.Select(static s =>
             BuildLine("VALUE", s.Name, s.Comment, s.IsVisible, string.Empty, s.Order)));
 
-        File.WriteAllLines(filePath, lines, System.Text.Encoding.UTF8);
+        var destination = Path.GetFullPath(filePath);
+        var temporary = Path.Combine(Path.GetDirectoryName(destination)!, $".comments-{Guid.NewGuid():N}.tmp");
+        try
+        {
+            File.WriteAllLines(temporary, lines, System.Text.Encoding.UTF8);
+            if (File.Exists(destination)) File.Replace(temporary, destination, null);
+            else File.Move(temporary, destination);
+        }
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
+        }
     }
 
     public static CommentCsvData Load(string filePath)
     {
         using var reader = CsvTextReader.Open(filePath, out var encodingName);
         var result = new CommentCsvData { EncodingName = encodingName };
-        while (reader.ReadLine() is { } rawLine)
+        foreach (var rawLine in CsvLineParser.ReadRecords(reader))
         {
             if (string.IsNullOrWhiteSpace(rawLine))
             {
