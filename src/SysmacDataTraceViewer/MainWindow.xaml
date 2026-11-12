@@ -13,7 +13,10 @@
         Height="840"
         MinWidth="1000"
         MinHeight="700"
-        PreviewKeyDown="MainWindow_PreviewKeyDown">
+        PreviewKeyDown="MainWindow_PreviewKeyDown"
+        AllowDrop="True"
+        PreviewDragOver="TraceFile_DragOver"
+        PreviewDrop="TraceFile_Drop">
     <Window.Resources>
         <Style x:Key="GridCellEditorTextBoxStyle" TargetType="TextBox">
             <Setter Property="Margin" Value="0,1,0,1" />

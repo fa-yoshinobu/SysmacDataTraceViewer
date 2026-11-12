@@ -23,6 +23,7 @@ Version date: 2026-02-05
 - Initial status text (before load): `Load a CSV file to display BOOL timeline and value variables.`
 
 ### CSV Input
+- Open through File → Open Trace CSV, by dropping one CSV onto the window, or by passing the first startup argument: `SysmacDataTraceViewer.exe "trace.csv"`. All paths share the same asynchronous loader. Multiple files and non-CSV drops show a reason; an unreadable startup file shows an error and leaves an empty window. Signal-row reordering remains separate. No Windows file association is registered.
 - Trace and comment CSV files use BOM-specified encoding when present. Without a BOM, the entire file is validated as strict UTF-8; decoding failure falls back to Shift_JIS (CP932). Invalid bytes are not silently replaced. The detected encoding is displayed in the status text. Comment CSV saving remains UTF-8.
 - Header row starts with `"Index","Date","ClockTime"...`.
 - Columns are `name:type` (example: `test1:BOOL`).
@@ -387,3 +388,6 @@ Version date: 2026-02-05
   - 再描画 + ステータス更新
 - 表示/並び変更(Value):
   - 値リスト更新 + ステータス更新
+
+### CSVを開く入口
+File → Open Trace CSV、ウィンドウへのCSV 1ファイルのドロップ、または起動時の第1引数（`SysmacDataTraceViewer.exe "trace.csv"`）で開く。全て同じ非同期読込み処理を呼ぶ。複数ファイルとCSV以外のドロップは理由を表示し、読めない起動ファイルはエラー後に空の画面を残す。信号リストの並び替えとは干渉しない。Windowsの拡張子関連付けは登録しない。

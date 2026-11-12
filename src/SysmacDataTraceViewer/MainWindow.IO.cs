@@ -5,6 +5,29 @@ namespace SysmacDataTraceViewer;
 
 internal partial class MainWindow
 {
+    private void TraceFile_DragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        e.Effects = !_viewModel.IsLoading && e.Data.GetData(DataFormats.FileDrop) is string[] paths &&
+            TraceFileInput.TryGetDropPath(paths, out _, out _) ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+    private async void TraceFile_Drop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        e.Handled = true;
+        if (_viewModel.IsLoading)
+        {
+            _dialogService.ShowInformation("Wait for the current CSV load to finish or cancel it first.", "Open CSV");
+            return;
+        }
+        if (!TraceFileInput.TryGetDropPath(e.Data.GetData(DataFormats.FileDrop) as string[] ?? [], out var path, out var reason))
+        {
+            _dialogService.ShowInformation(reason, "Open CSV");
+            return;
+        }
+        await LoadCsvAsync(path).ConfigureAwait(true);
+    }
     private async void LoadCsv_Click(object sender, RoutedEventArgs e) => await _files.OpenAsync().ConfigureAwait(true);
     internal Task LoadCsvAsync(string fileName) => _files.LoadAsync(fileName);
     private void CancelLoad_Click(object sender, RoutedEventArgs e) => _files.CancelLoad();

@@ -15,6 +15,8 @@ Windows上でSysmac StudioのData Trace CSVを確認するWPFアプリです。B
 
 ZIPを展開して`SysmacDataTraceViewer.exe`を起動します。.NETランタイムは同梱しています。最新の公開版は冒頭のReleaseバッジ、変更内容は[変更履歴](CHANGELOG.md)を参照してください。
 
+CSVは「File → Open Trace CSV」、ウィンドウへの1ファイルのドロップ、または `SysmacDataTraceViewer.exe "trace.csv"` で開けます。複数ファイル・CSV以外のドロップは理由を表示して受け付けません。Windowsの関連付けは登録しません。
+
 ## 主な機能
 
 - BOOL信号の複数レーン表示、主カーソルと差分カーソル、変化点への移動

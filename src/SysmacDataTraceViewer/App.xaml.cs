@@ -13,6 +13,18 @@ internal sealed partial class App : System.Windows.Application
         AppDomain.CurrentDomain.UnhandledException += OnProcessError;
     }
 
+    protected override async void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+        var window = new MainWindow();
+        MainWindow = window;
+        window.Show();
+        if (e.Args.Length > 0)
+        {
+            await window.LoadCsvAsync(e.Args[0]).ConfigureAwait(true);
+        }
+    }
+
     private void OnDispatcherError(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         AppErrorLog.Record("Unhandled UI exception", e.Exception);
