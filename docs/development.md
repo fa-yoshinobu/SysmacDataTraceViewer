@@ -33,3 +33,17 @@ python -B -m unittest discover -s tests/release
 未完了のVirusTotal検査は、`Scan release with VirusTotal`へ公開タグを指定して再実行できます。旧タグ向けの互換入口`Rescan release with VirusTotal`も維持しています。既存リリースの配布物を上書きして修正せず、新しい版を発行します。
 
 リリース本文とVirusTotal CIの表示は英語、READMEやCHANGELOGは既存の言語方針を維持します。詳細は[共通リリース仕様](https://github.com/fa-yoshinobu/release_standard)を参照してください。
+
+## Phase 4 実施状況（2026-11-12）
+
+既存の `docs/phase4-refactor-plan.md` は作業開始時から削除されていたため、復元せず実施状況だけをここに記録する。
+
+| 手順 | 状態 |
+| --- | --- |
+| PlotModel構築の分離 | 済み（TracePlotModelBuilder） |
+| ダイアログの差し替え | 済み（IDialogService、TraceFileOperations） |
+| カーソル状態の分離 | 済み（CursorState）。画面座標と注釈の接続はMainWindowに残す |
+| 操作のコマンド化 | 済み。読込み・コメント・PNGの段取りはサービス、信号の状態・操作はViewModelへ移動 |
+| XAMLの状態バインド | ステータス・読込み状態・表示行・操作コマンドは済み。GridのサイズとOxyPlotの操作接続は画面側に残す |
+
+名前レーンの表示処理は専用の `Views/NameLanePresenter` にまとめ、信号選択をMainWindowへ通知する。画面のレイアウトは変えない。

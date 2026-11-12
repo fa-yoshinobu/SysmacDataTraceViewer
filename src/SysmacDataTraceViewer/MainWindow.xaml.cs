@@ -17,31 +17,19 @@ namespace SysmacDataTraceViewer;
 internal sealed partial class MainWindow : Window
 {
     // Core plotting/state orchestration for the main window.
-    private const string NoChangeSuffix = " [No Change]";
-    private const string HideVariableSettingsText = "Hide Variable Settings";
-    private const string ShowVariableSettingsText = "Show Variable Settings";
-    private const string CsvLoadErrorTitle = "CSV Load Error";
-    private const string PngExportErrorTitle = "PNG Export Error";
-    private const string SaveCommentsTitle = "Save Comments";
-    private const string LoadCommentsTitle = "Load Comments";
-    private const string LoadCommentsErrorTitle = "Load Comments Error";
-    private const string LoadTraceFirstMessage = "Load a trace CSV first.";
 
     private readonly MainViewModel _viewModel = new();
     private readonly IDialogService _dialogService;
-    private TraceData? _traceData;
+    private TraceData? _traceData => _viewModel.TraceData;
+    private readonly TraceFileOperations _files;
+    private readonly Views.NameLanePresenter _nameLane;
     private LineAnnotation? _cursorAnnotation;
     private LineAnnotation? _deltaCursorAnnotation;
     private RectangleAnnotation? _cursorRangeAnnotation;
     private RectangleAnnotation? _hoverSegmentAnnotation;
     private bool _hoverSegmentActive;
-    private bool _suspendVisibilityUpdate;
-    private bool _isBoolPanelVisible = true;
-    private bool _isBottomPanelVisible = true;
     private bool _suppressScrollEvent;
-    private bool _suppressNameLaneScrollEvent;
     private bool _suppressAxisEvent;
-    private bool _suspendCommentUpdate;
     private bool _isCursorDragging;
     private bool _isDeltaCursorDragging;
     private Point _boolListDragStartPoint;
@@ -52,13 +40,10 @@ internal sealed partial class MainWindow : Window
     private double _dataMinX;
     private double _dataMaxX;
     private double _windowSizeX = 1.0;
-    private bool _showCommentLabels;
-    private bool _showTypeSuffix;
     private int _lastHoverSignalIndex = -1;
     private int _lastHoverStartIndex = -1;
     private int _lastHoverEndExclusive = -1;
     private bool? _lastHoverState;
-    private readonly Dictionary<int, OxyColor> _boolColors = new();
     private List<int> _changePointSampleIndexes = [];
     private List<int> _visibleBoolSignalIndexes = [];
     private bool _jumpScopeSelectedBoolOnly;
@@ -71,7 +56,12 @@ internal sealed partial class MainWindow : Window
     internal MainWindow(IDialogService? dialogService)
     {
         InitializeComponent();
+        _nameLane = new Views.NameLanePresenter(NameLaneGrid, NameLaneScrollViewer, NameLaneScrollBar);
+        _nameLane.SignalSelected += SelectBoolFromNameLane;
         _dialogService = dialogService ?? new WpfDialogService(this);
+        _files = new TraceFileOperations(_viewModel, _dialogService);
+        _files.TraceLoaded += RedrawWithVisibility;
+        _viewModel.RedrawRequested += RedrawWithVisibility;
         ConfigureViewModelCommands();
         _viewModel.PropertyChanged += MainViewModel_PropertyChanged;
         DataContext = _viewModel;
@@ -103,11 +93,11 @@ internal sealed partial class MainWindow : Window
             JumpNextChange = () => JumpNextChange_Click(this, new RoutedEventArgs()),
             SelectAllBool = () => AllBoolOn_Click(this, new RoutedEventArgs()),
             ClearAllBool = () => AllBoolOff_Click(this, new RoutedEventArgs()),
-            HideNoChangeBool = () => HideNoChangeBool_Click(this, new RoutedEventArgs()),
-            AutoBoolColors = () => AutoBoolColors_Click(this, new RoutedEventArgs()),
+            HideNoChangeBool = () => _viewModel.HideNoChangeBool(),
+            AutoBoolColors = () => _viewModel.AutoBoolColors(),
             SelectAllValue = () => AllValueOn_Click(this, new RoutedEventArgs()),
             ClearAllValue = () => AllValueOff_Click(this, new RoutedEventArgs()),
-            HideNoChangeValue = () => HideNoChangeValue_Click(this, new RoutedEventArgs())
+            HideNoChangeValue = () => _viewModel.HideNoChangeValue()
         });
     }
 
@@ -115,8 +105,7 @@ internal sealed partial class MainWindow : Window
     {
         if (e.PropertyName == nameof(MainViewModel.ShowTypeSuffix))
         {
-            _showTypeSuffix = _viewModel.ShowTypeSuffix;
-            UpdateDisplayLabels();
+            _viewModel.UpdateDisplayLabels();
             if (_traceData is not null)
             {
                 RedrawWithVisibility();
@@ -132,35 +121,6 @@ internal sealed partial class MainWindow : Window
         }
     }
 
-    private void ReorderBoolRows(List<string> orderedNames)
-    {
-        var ordered = SignalOrderingService.BuildOrderedRows(_viewModel.BoolSignals, orderedNames, static row => row.Name);
-        if (ordered is null)
-        {
-            return;
-        }
-
-        _viewModel.BoolSignals.Clear();
-        foreach (var row in ordered)
-        {
-            _viewModel.BoolSignals.Add(row);
-        }
-    }
-
-    private void ReorderValueRows(List<string> orderedNames)
-    {
-        var ordered = SignalOrderingService.BuildOrderedRows(_viewModel.ValueSignals, orderedNames, static row => row.Name);
-        if (ordered is null)
-        {
-            return;
-        }
-
-        _viewModel.ValueSignals.Clear();
-        foreach (var row in ordered)
-        {
-            _viewModel.ValueSignals.Add(row);
-        }
-    }
     private void TracePlot_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         if (_traceData is null || TracePlot.Model is null)
@@ -247,7 +207,7 @@ internal sealed partial class MainWindow : Window
 
     private void DrawTrace(TraceData traceData, List<int> visibleSignalIndexes)
     {
-        var model = TracePlotModelBuilder.Build(traceData, visibleSignalIndexes, GetSignalColor);
+        var model = TracePlotModelBuilder.Build(traceData, visibleSignalIndexes, _viewModel.GetSignalColor);
         // DefaultXAxis is assigned on the first render, after this hookup runs.
         if (model.Axes.FirstOrDefault(static axis => axis.Position == AxisPosition.Bottom) is Axis xAxis)
         {
@@ -256,7 +216,7 @@ internal sealed partial class MainWindow : Window
 #pragma warning restore CS0618
         }
 
-        var laneNames = visibleSignalIndexes.Select(GetBoolLaneLabel).ToList();
+        var laneNames = visibleSignalIndexes.Select(_viewModel.GetBoolLaneLabel).ToList();
         _visibleBoolSignalIndexes = [.. visibleSignalIndexes];
 
         var firstX = traceData.ElapsedSeconds[0];
@@ -408,7 +368,7 @@ internal sealed partial class MainWindow : Window
         {
             if (e.Key == Input.Key.Escape)
             {
-                _loadCancellation?.Cancel();
+                _files.CancelLoad();
             }
 
             e.Handled = true;
@@ -464,256 +424,19 @@ internal sealed partial class MainWindow : Window
         TracePlot.Model = TracePlotModelBuilder.BuildEmpty();
     }
 
-    private void InitializeValueRows(TraceData traceData)
-    {
-        foreach (var row in _viewModel.ValueSignals)
-        {
-            row.PropertyChanged -= ValueSignalRow_PropertyChanged;
-        }
-
-        _viewModel.ValueSignals.Clear();
-        foreach (var signal in traceData.ValueSignals)
-        {
-            var row = new ValueSignalRow
-            {
-                Name = signal.Name,
-                SignalIndex = _viewModel.ValueSignals.Count,
-                CommentText = UiFormattingService.BuildDefaultComment(signal.Name),
-                DisplayLabel = signal.Name,
-                IsUnchanged = !signal.HasChange,
-                IsVisible = true,
-                ValueText = "-"
-            };
-            row.PropertyChanged += ValueSignalRow_PropertyChanged;
-            _viewModel.ValueSignals.Add(row);
-        }
-
-        UpdateDisplayLabels();
-        RefreshVisibleValueRows();
-    }
-
-    private void UpdateValueRows(TraceData traceData, int sampleIndex)
-    {
-        foreach (var row in _viewModel.ValueSignals)
-        {
-            if (row.SignalIndex < 0 || row.SignalIndex >= traceData.ValueSignals.Count)
-            {
-                row.ValueText = "-";
-                continue;
-            }
-
-            var value = traceData.ValueSignals[row.SignalIndex].Values[sampleIndex];
-            row.ValueText = string.IsNullOrWhiteSpace(value) ? "-" : value;
-        }
-    }
-
-    private void InitializeBoolRows(TraceData traceData)
-    {
-        foreach (var row in _viewModel.BoolSignals)
-        {
-            row.PropertyChanged -= BoolSignalRow_PropertyChanged;
-        }
-
-        _viewModel.BoolSignals.Clear();
-        for (var i = 0; i < traceData.BoolSignals.Count; i++)
-        {
-            var colorHex = SignalColorService.ToHex(GetSignalColor(i));
-            var row = new BoolSignalRow
-            {
-                Index = i,
-                Name = traceData.BoolSignals[i].Name,
-                CommentText = UiFormattingService.BuildDefaultComment(traceData.BoolSignals[i].Name),
-                DisplayLabel = traceData.BoolSignals[i].Name,
-                IsUnchanged = !traceData.BoolSignals[i].HasChange,
-                IsVisible = true,
-                ColorHex = colorHex
-            };
-            row.PropertyChanged += BoolSignalRow_PropertyChanged;
-            _viewModel.BoolSignals.Add(row);
-        }
-
-        UpdateDisplayLabels();
-    }
-
-    private void BoolSignalRow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (_traceData is null || sender is not BoolSignalRow row)
-        {
-            return;
-        }
-
-        if (e.PropertyName == nameof(BoolSignalRow.IsVisible))
-        {
-            if (_suspendVisibilityUpdate)
-            {
-                return;
-            }
-
-            RedrawWithVisibility();
-            return;
-        }
-
-        if (e.PropertyName == nameof(BoolSignalRow.ColorHex))
-        {
-            if (SignalColorService.TryParseHexColor(row.ColorHex, out var color))
-            {
-                _boolColors[row.Index] = color;
-                // Bulk-apply paths (comments/profile load) set suspension flags, so skip per-row redraw.
-                if (_suspendVisibilityUpdate || _suspendCommentUpdate)
-                {
-                    return;
-                }
-
-                RedrawWithVisibility();
-            }
-            return;
-        }
-
-        if (e.PropertyName == nameof(BoolSignalRow.CommentText) && _showCommentLabels)
-        {
-            if (_suspendCommentUpdate)
-            {
-                return;
-            }
-
-            UpdateDisplayLabels();
-            RedrawWithVisibility();
-        }
-    }
-
-    private void ValueSignalRow_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (sender is not ValueSignalRow)
-        {
-            return;
-        }
-
-        if (e.PropertyName == nameof(ValueSignalRow.IsVisible))
-        {
-            RefreshVisibleValueRows();
-            UpdateStatusForVisibility();
-            return;
-        }
-
-        if (e.PropertyName == nameof(ValueSignalRow.CommentText))
-        {
-            if (_suspendCommentUpdate)
-            {
-                return;
-            }
-
-            UpdateDisplayLabels();
-            RefreshVisibleValueRows();
-            UpdateStatusForVisibility();
-        }
-    }
-
     private void AllBoolOn_Click(object sender, RoutedEventArgs e)
     {
-        SetAllBoolVisibility(true);
+        _viewModel.SetAllBoolVisibility(true);
     }
 
     private void AllBoolOff_Click(object sender, RoutedEventArgs e)
     {
-        SetAllBoolVisibility(false);
+        _viewModel.SetAllBoolVisibility(false);
     }
 
-    private void SetAllBoolVisibility(bool isVisible)
-    {
-        if (_traceData is null)
-        {
-            return;
-        }
+    private void AllValueOn_Click(object sender, RoutedEventArgs e) => _viewModel.SetAllValueVisibility(true);
 
-        _suspendVisibilityUpdate = true;
-        try
-        {
-            foreach (var row in _viewModel.BoolSignals)
-            {
-                row.IsVisible = isVisible;
-            }
-        }
-        finally
-        {
-            _suspendVisibilityUpdate = false;
-        }
-
-        RedrawWithVisibility();
-    }
-
-    private void HideNoChangeBool_Click(object sender, RoutedEventArgs e)
-    {
-        if (_traceData is null)
-        {
-            return;
-        }
-
-        _suspendVisibilityUpdate = true;
-        try
-        {
-            foreach (var row in _viewModel.BoolSignals)
-            {
-                if (row.IsUnchanged)
-                {
-                    row.IsVisible = false;
-                }
-            }
-        }
-        finally
-        {
-            _suspendVisibilityUpdate = false;
-        }
-
-        RedrawWithVisibility();
-    }
-
-    private void AutoBoolColors_Click(object sender, RoutedEventArgs e)
-    {
-        if (_traceData is null)
-        {
-            return;
-        }
-
-        var visibleRows = _viewModel.BoolSignals.Where(static row => row.IsVisible).ToList();
-        for (var i = 0; i < visibleRows.Count; i++)
-        {
-            var row = visibleRows[i];
-            var color = SignalColorService.GetDefaultPaletteColor(i);
-            _boolColors[row.Index] = color;
-            row.ColorHex = SignalColorService.ToHex(color);
-        }
-
-        RedrawWithVisibility();
-    }
-
-    private void AllValueOn_Click(object sender, RoutedEventArgs e) => SetAllValueVisibility(true);
-
-    private void AllValueOff_Click(object sender, RoutedEventArgs e) => SetAllValueVisibility(false);
-
-    private void SetAllValueVisibility(bool isVisible)
-    {
-        foreach (var row in _viewModel.ValueSignals)
-        {
-            row.IsVisible = isVisible;
-        }
-
-        RefreshVisibleValueRows();
-        UpdateStatusForVisibility();
-    }
-
-    private void HideNoChangeValue_Click(object sender, RoutedEventArgs e)
-    {
-        foreach (var row in _viewModel.ValueSignals)
-        {
-            if (row.IsUnchanged)
-            {
-                row.IsVisible = false;
-            }
-        }
-
-        RefreshVisibleValueRows();
-        UpdateStatusForVisibility();
-    }
+    private void AllValueOff_Click(object sender, RoutedEventArgs e) => _viewModel.SetAllValueVisibility(false);
 
     private void RedrawWithVisibility()
     {
@@ -722,30 +445,28 @@ internal sealed partial class MainWindow : Window
             return;
         }
 
-        var visible = GetVisibleBoolIndexes();
+        var visible = _viewModel.GetVisibleBoolIndexes();
         DrawTrace(_traceData, visible);
         _viewModel.StatusText = UiFormattingService.BuildStatusText(_traceData, visible.Count, _viewModel.VisibleValueSignals.Count);
     }
 
     private void ToggleBoolPanel_Click(object sender, RoutedEventArgs e)
     {
-        _isBoolPanelVisible = !_isBoolPanelVisible;
-        BoolPanelBorder.Visibility = _isBoolPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-        BoolPanelSplitter.Visibility = _isBoolPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-        BoolPanelSplitterColumn.Width = _isBoolPanelVisible ? new GridLength(6) : new GridLength(0);
-        BoolPanelColumn.Width = _isBoolPanelVisible ? new GridLength(320) : new GridLength(0);
-        _viewModel.BoolPanelToggleText = _isBoolPanelVisible ? "Hide Right Panel" : "Show Right Panel";
+        _viewModel.ToggleBoolPanel();
+        BoolPanelBorder.Visibility = _viewModel.IsBoolPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+        BoolPanelSplitter.Visibility = _viewModel.IsBoolPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+        BoolPanelSplitterColumn.Width = _viewModel.IsBoolPanelVisible ? new GridLength(6) : new GridLength(0);
+        BoolPanelColumn.Width = _viewModel.IsBoolPanelVisible ? new GridLength(320) : new GridLength(0);
     }
 
     private void ToggleBottomPanel_Click(object sender, RoutedEventArgs e)
     {
-        _isBottomPanelVisible = !_isBottomPanelVisible;
-        BottomPanelBorder.Visibility = _isBottomPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-        BottomPanelSplitter.Visibility = _isBottomPanelVisible ? Visibility.Visible : Visibility.Collapsed;
-        BottomPanelSplitterRow.Height = _isBottomPanelVisible ? new GridLength(6) : new GridLength(0);
-        BottomPanelRow.MinHeight = _isBottomPanelVisible ? 140 : 0;
-        BottomPanelRow.Height = _isBottomPanelVisible ? new GridLength(2, GridUnitType.Star) : new GridLength(0);
-        _viewModel.BottomPanelToggleText = _isBottomPanelVisible ? HideVariableSettingsText : ShowVariableSettingsText;
+        _viewModel.ToggleBottomPanel();
+        BottomPanelBorder.Visibility = _viewModel.IsBottomPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+        BottomPanelSplitter.Visibility = _viewModel.IsBottomPanelVisible ? Visibility.Visible : Visibility.Collapsed;
+        BottomPanelSplitterRow.Height = _viewModel.IsBottomPanelVisible ? new GridLength(6) : new GridLength(0);
+        BottomPanelRow.MinHeight = _viewModel.IsBottomPanelVisible ? 140 : 0;
+        BottomPanelRow.Height = _viewModel.IsBottomPanelVisible ? new GridLength(2, GridUnitType.Star) : new GridLength(0);
     }
 
     private void BoolSignalsListBox_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -753,163 +474,51 @@ internal sealed partial class MainWindow : Window
         _boolListDragStartPoint = e.GetPosition(BoolSignalsListBox);
     }
 
-    private void BoolSignalsListBox_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    private void BoolSignalsListBox_PreviewMouseMove(object sender, Input.MouseEventArgs e) => StartRowDrag<BoolSignalRow>(BoolSignalsListBox, _boolListDragStartPoint, e);
+    private void ValueSignalsListBox_PreviewMouseLeftButtonDown(object sender, Input.MouseButtonEventArgs e) => _valueListDragStartPoint = e.GetPosition(ValueSignalsListBox);
+    private void ValueSignalsListBox_PreviewMouseMove(object sender, Input.MouseEventArgs e) => StartRowDrag<ValueSignalRow>(ValueSignalsListBox, _valueListDragStartPoint, e);
+    private void BoolSignalsListBox_DragOver(object sender, DragEventArgs e) => SetRowDragEffect<BoolSignalRow>(e);
+    private void ValueSignalsListBox_DragOver(object sender, DragEventArgs e) => SetRowDragEffect<ValueSignalRow>(e);
+    private static void SetRowDragEffect<T>(DragEventArgs e)
     {
-        if (e.LeftButton != System.Windows.Input.MouseButtonState.Pressed)
-        {
-            return;
-        }
-
-        if (e.OriginalSource is DependencyObject source &&
-            FindVisualParent<TextBox>(source) is not null)
-        {
-            // Allow normal text selection/editing drag inside cell editors.
-            return;
-        }
-
-        var currentPos = e.GetPosition(BoolSignalsListBox);
-        var delta = currentPos - _boolListDragStartPoint;
-        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
-            Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance)
-        {
-            return;
-        }
-
-        if (ItemsControl.ContainerFromElement(BoolSignalsListBox, e.OriginalSource as DependencyObject) is not ListViewItem item ||
-            item.DataContext is not BoolSignalRow row)
-        {
-            return;
-        }
-
-        DragDrop.DoDragDrop(item, row, DragDropEffects.Move);
-    }
-
-    private void BoolSignalsListBox_DragOver(object sender, DragEventArgs e)
-    {
-        e.Effects = e.Data.GetDataPresent(typeof(BoolSignalRow)) ? DragDropEffects.Move : DragDropEffects.None;
+        e.Effects = e.Data.GetDataPresent(typeof(T)) ? DragDropEffects.Move : DragDropEffects.None;
         e.Handled = true;
     }
-
+    private static void StartRowDrag<T>(ListView list, Point start, Input.MouseEventArgs e)
+    {
+        if (e.LeftButton != Input.MouseButtonState.Pressed ||
+            (e.OriginalSource is DependencyObject source && FindVisualParent<TextBox>(source) is not null)) return;
+        var delta = e.GetPosition(list) - start;
+        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+        if (ItemsControl.ContainerFromElement(list, e.OriginalSource as DependencyObject) is ListViewItem { DataContext: T row } item)
+            DragDrop.DoDragDrop(item, row, DragDropEffects.Move);
+    }
     private void BoolSignalsListBox_Drop(object sender, DragEventArgs e)
     {
-        if (!e.Data.GetDataPresent(typeof(BoolSignalRow)) || e.Data.GetData(typeof(BoolSignalRow)) is not BoolSignalRow sourceRow)
-        {
-            return;
-        }
-
-        var sourceIndex = _viewModel.BoolSignals.IndexOf(sourceRow);
-        if (sourceIndex < 0)
-        {
-            return;
-        }
-
-        if (ItemsControl.ContainerFromElement(BoolSignalsListBox, e.OriginalSource as DependencyObject) is not ListViewItem targetItem ||
-            targetItem.DataContext is not BoolSignalRow targetRow)
-        {
-            // Ignore drops on empty area to avoid unintended "move to end" behavior.
-            return;
-        }
-
-        var targetIndex = _viewModel.BoolSignals.IndexOf(targetRow);
-
-        if (targetIndex < 0 || targetIndex == sourceIndex)
-        {
-            return;
-        }
-
-        _viewModel.BoolSignals.RemoveAt(sourceIndex);
-        if (sourceIndex < targetIndex)
-        {
-            targetIndex--;
-        }
-
-        _viewModel.BoolSignals.Insert(targetIndex, sourceRow);
-        RedrawWithVisibility();
+        if (MoveDroppedRow(BoolSignalsListBox, _viewModel.BoolSignals, e)) RedrawWithVisibility();
     }
-
-    private void ValueSignalsListBox_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        _valueListDragStartPoint = e.GetPosition(ValueSignalsListBox);
-    }
-
-    private void ValueSignalsListBox_PreviewMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-    {
-        if (e.LeftButton != System.Windows.Input.MouseButtonState.Pressed)
-        {
-            return;
-        }
-
-        if (e.OriginalSource is DependencyObject source &&
-            FindVisualParent<TextBox>(source) is not null)
-        {
-            // Allow normal text selection/editing drag inside cell editors.
-            return;
-        }
-
-        var currentPos = e.GetPosition(ValueSignalsListBox);
-        var delta = currentPos - _valueListDragStartPoint;
-        if (Math.Abs(delta.X) < SystemParameters.MinimumHorizontalDragDistance &&
-            Math.Abs(delta.Y) < SystemParameters.MinimumVerticalDragDistance)
-        {
-            return;
-        }
-
-        if (ItemsControl.ContainerFromElement(ValueSignalsListBox, e.OriginalSource as DependencyObject) is not ListViewItem item ||
-            item.DataContext is not ValueSignalRow row)
-        {
-            return;
-        }
-
-        DragDrop.DoDragDrop(item, row, DragDropEffects.Move);
-    }
-
-    private void ValueSignalsListBox_DragOver(object sender, DragEventArgs e)
-    {
-        e.Effects = e.Data.GetDataPresent(typeof(ValueSignalRow)) ? DragDropEffects.Move : DragDropEffects.None;
-        e.Handled = true;
-    }
-
     private void ValueSignalsListBox_Drop(object sender, DragEventArgs e)
     {
-        if (!e.Data.GetDataPresent(typeof(ValueSignalRow)) || e.Data.GetData(typeof(ValueSignalRow)) is not ValueSignalRow sourceRow)
-        {
-            return;
-        }
-
-        var sourceIndex = _viewModel.ValueSignals.IndexOf(sourceRow);
-        if (sourceIndex < 0)
-        {
-            return;
-        }
-
-        if (ItemsControl.ContainerFromElement(ValueSignalsListBox, e.OriginalSource as DependencyObject) is not ListViewItem targetItem ||
-            targetItem.DataContext is not ValueSignalRow targetRow)
-        {
-            // Ignore drops on empty area to avoid unintended "move to end" behavior.
-            return;
-        }
-
-        var targetIndex = _viewModel.ValueSignals.IndexOf(targetRow);
-
-        if (targetIndex < 0 || targetIndex == sourceIndex)
-        {
-            return;
-        }
-
-        _viewModel.ValueSignals.RemoveAt(sourceIndex);
-        if (sourceIndex < targetIndex)
-        {
-            targetIndex--;
-        }
-
-        _viewModel.ValueSignals.Insert(targetIndex, sourceRow);
-        RefreshVisibleValueRows();
+        if (MoveDroppedRow(ValueSignalsListBox, _viewModel.ValueSignals, e)) _viewModel.RefreshVisibleValueRows();
+    }
+    private static bool MoveDroppedRow<T>(ListView list, System.Collections.ObjectModel.ObservableCollection<T> rows, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(typeof(T)) || e.Data.GetData(typeof(T)) is not T sourceRow ||
+            ItemsControl.ContainerFromElement(list, e.OriginalSource as DependencyObject) is not ListViewItem { DataContext: T targetRow }) return false;
+        var sourceIndex = rows.IndexOf(sourceRow);
+        var targetIndex = rows.IndexOf(targetRow);
+        if (sourceIndex < 0 || targetIndex < 0 || targetIndex == sourceIndex) return false;
+        rows.RemoveAt(sourceIndex);
+        if (sourceIndex < targetIndex) targetIndex--;
+        rows.Insert(targetIndex, sourceRow);
+        return true;
     }
 
     private void LabelModeComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        _showCommentLabels = LabelModeComboBox.SelectedIndex == 1;
-        UpdateDisplayLabels();
+        _viewModel.ShowCommentLabels = LabelModeComboBox.SelectedIndex == 1;
+        _viewModel.UpdateDisplayLabels();
         if (_traceData is not null)
         {
             RedrawWithVisibility();
@@ -1076,81 +685,6 @@ internal sealed partial class MainWindow : Window
         }
     }
 
-    private OxyColor GetSignalColor(int signalIndex)
-    {
-        if (_boolColors.TryGetValue(signalIndex, out var color))
-        {
-            return color;
-        }
-
-        return OxyColors.DodgerBlue;
-    }
-
-    private void ApplyAutoColors(int signalCount)
-    {
-        _boolColors.Clear();
-        if (signalCount <= 0)
-        {
-            return;
-        }
-
-        for (var i = 0; i < signalCount; i++)
-        {
-            _boolColors[i] = SignalColorService.GetDefaultPaletteColor(i);
-        }
-    }
-
-    private void UpdateBoolRowColor(int signalIndex)
-    {
-        var row = _viewModel.BoolSignals.FirstOrDefault(r => r.Index == signalIndex);
-        if (row is null)
-        {
-            return;
-        }
-
-        row.ColorHex = SignalColorService.ToHex(GetSignalColor(signalIndex));
-    }
-
-    private void UpdateDisplayLabels()
-    {
-        foreach (var row in _viewModel.BoolSignals)
-        {
-            // BOOL labels stay fixed to variable names to keep signal-row identity stable.
-            row.DisplayLabel = UiFormattingService.FormatVariableName(row.Name, _showTypeSuffix);
-        }
-
-        foreach (var row in _viewModel.ValueSignals)
-        {
-            // Value labels follow BOOL Label Mode (Variable Name / Comment).
-            var baseText = _showCommentLabels && !string.IsNullOrWhiteSpace(row.CommentText)
-                ? row.CommentText
-                : UiFormattingService.FormatVariableName(row.Name, _showTypeSuffix);
-            row.DisplayLabel = baseText;
-            row.SettingsDisplayName = UiFormattingService.FormatVariableName(row.Name, _showTypeSuffix);
-        }
-
-        RefreshVisibleValueRows();
-    }
-
-    private void RefreshVisibleValueRows()
-    {
-        _viewModel.VisibleValueSignals.Clear();
-        foreach (var row in _viewModel.ValueSignals.Where(static r => r.IsVisible))
-        {
-            _viewModel.VisibleValueSignals.Add(row);
-        }
-    }
-
-    private void UpdateStatusForVisibility()
-    {
-        if (_traceData is null)
-        {
-            return;
-        }
-
-        _viewModel.StatusText = UiFormattingService.BuildStatusText(_traceData, GetVisibleBoolIndexes().Count, _viewModel.VisibleValueSignals.Count);
-    }
-
     private void RefreshChangePointIndexes()
     {
         if (_traceData is null)
@@ -1225,23 +759,6 @@ internal sealed partial class MainWindow : Window
         BoolSignalsListBox.SelectedItem = firstVisible;
         BoolSignalsListBox.ScrollIntoView(firstVisible);
     }
-
-    private string GetBoolLaneLabel(int signalIndex)
-    {
-        var row = _viewModel.BoolSignals.FirstOrDefault(r => r.Index == signalIndex);
-        if (row is null)
-        {
-            return _traceData?.BoolSignals[signalIndex].Name ?? string.Empty;
-        }
-
-        var baseText = _showCommentLabels && !string.IsNullOrWhiteSpace(row.CommentText)
-            ? row.CommentText
-            : UiFormattingService.FormatVariableName(row.Name, _showTypeSuffix);
-        return row.IsUnchanged ? $"{baseText}{NoChangeSuffix}" : baseText;
-    }
-
-    private List<int> GetVisibleBoolIndexes() =>
-        [.. _viewModel.BoolSignals.Where(static s => s.IsVisible).Select(static s => s.Index)];
 
 
 }

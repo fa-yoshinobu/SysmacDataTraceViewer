@@ -5,7 +5,7 @@ using System.Windows.Input;
 
 namespace SysmacDataTraceViewer.ViewModels;
 
-internal sealed class MainViewModel : INotifyPropertyChanged
+internal sealed partial class MainViewModel : INotifyPropertyChanged
 {
     private string _statusText = "Load a CSV file to display BOOL timeline and value variables.";
     private string _cursorTimeText = "-";
