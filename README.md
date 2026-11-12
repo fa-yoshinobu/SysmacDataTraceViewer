@@ -69,8 +69,8 @@ dotnet publish .\src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj `
 
 ### Automated CI / Release
 
-- `CI`: runs on push to `main` and on pull requests. It restores, builds with analyzers enabled, verifies `dotnet format`, and smoke-tests Single EXE publish.
-- `Release Single EXE`: push a tag like `v1.0.4` or `Ver.1.0.4` that matches the project `<Version>` to build the `win-x64` self-contained Single EXE and create a GitHub Release automatically.
+- `CI`: runs on push to `main` and on pull requests. It runs `ci.bat`: restore, build with warnings as errors, unit tests, `dotnet format`, and Single EXE publish verification.
+- `Release Single EXE`: push a `vMAJOR.MINOR.PATCH` tag that matches the project `<Version>` to build and test the `win-x64` self-contained Single EXE and create a GitHub Release automatically.
 - `VirusTotal scan on release`: runs after the GitHub Release is published and appends the VirusTotal result to the release page.
 
 ### Repository
