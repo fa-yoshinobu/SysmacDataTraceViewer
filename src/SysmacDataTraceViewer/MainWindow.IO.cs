@@ -51,6 +51,7 @@ internal partial class MainWindow
             var trace = await Task.Run(() => CsvTraceParser.Parse(fileName, progress, cancellation.Token), cancellation.Token).ConfigureAwait(true);
             cancellation.Token.ThrowIfCancellationRequested();
             _traceData = trace;
+            _viewModel.HasReadIssues = trace.Diagnostics.HasIssues;
             ApplyAutoColors(_traceData.BoolSignals.Count);
             InitializeBoolRows(_traceData);
             InitializeValueRows(_traceData);
@@ -105,6 +106,14 @@ internal partial class MainWindow
     }
 
     private void CancelLoad_Click(object sender, RoutedEventArgs e) => _loadCancellation?.Cancel();
+
+    private void ReadDetails_Click(object sender, RoutedEventArgs e)
+    {
+        if (_traceData is not null)
+        {
+            _dialogService.ShowInformation(_traceData.Diagnostics.Describe(), "CSV Read Details");
+        }
+    }
 
     protected override void OnClosed(EventArgs e)
     {

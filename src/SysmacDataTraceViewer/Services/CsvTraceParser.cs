@@ -11,9 +11,11 @@ internal static class CsvTraceParser
         using var reader = CsvTextReader.Open(path, out var encodingName, progress, cancellationToken);
 
         List<string>? headers = null;
+        var lineNumber = 0;
         while (reader.ReadLine() is { } line)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            lineNumber++;
             if (string.IsNullOrWhiteSpace(line))
             {
                 continue;
@@ -75,9 +77,15 @@ internal static class CsvTraceParser
         TimeSpan? previousClock = null;
         string? previousDateText = null;
         var elapsedTotalSeconds = 0.0;
+        var diagnostics = new TraceReadDiagnostics();
         while (reader.ReadLine() is { } rowLine)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            lineNumber++;
+            if (lineNumber % 1024 == 0)
+            {
+                progress?.Report(10 + (int)(reader.BaseStream.Position * 80 / Math.Max(1, reader.BaseStream.Length)));
+            }
             if (string.IsNullOrWhiteSpace(rowLine))
             {
                 continue;
@@ -86,11 +94,13 @@ internal static class CsvTraceParser
             var cols = CsvLineParser.Parse(rowLine);
             if (cols.Count <= clockTimeIndex)
             {
+                diagnostics.Skip(lineNumber, "ClockTime column is missing.");
                 continue;
             }
 
             if (!TryParseClockTime(cols[clockTimeIndex], out var clock))
             {
+                diagnostics.Skip(lineNumber, "ClockTime is invalid.");
                 continue;
             }
 
@@ -111,6 +121,11 @@ internal static class CsvTraceParser
                 }
 
                 // Guard against malformed/out-of-order rows.
+                if (delta < 0)
+                {
+                    diagnostics.ReversedTime(lineNumber);
+                }
+
                 elapsedTotalSeconds += Math.Max(delta, 0);
             }
 
@@ -124,26 +139,33 @@ internal static class CsvTraceParser
             for (var i = 0; i < boolColumns.Count; i++)
             {
                 var index = boolColumns[i].Index;
-                boolData[i].Add(index < cols.Count ? ParseBool(cols[index]) : null);
+                var value = index < cols.Count ? ParseBool(cols[index]) : null;
+                if (index >= cols.Count || (!string.IsNullOrWhiteSpace(cols[index]) && !value.HasValue))
+                {
+                    diagnostics.InvalidValue(lineNumber, index + 1, index >= cols.Count ? "Field is missing." : "BOOL value is invalid.");
+                }
+
+                boolData[i].Add(value);
             }
 
             for (var i = 0; i < valueColumns.Count; i++)
             {
                 var column = valueColumns[i];
                 var value = column.Index < cols.Count ? ParseValue(cols[column.Index], column.TypeName) : null;
+                if (column.Index >= cols.Count || (!string.IsNullOrWhiteSpace(cols[column.Index]) && value is null))
+                {
+                    diagnostics.InvalidValue(lineNumber, column.Index + 1, column.Index >= cols.Count ? "Field is missing." : "Value does not match its type.");
+                }
+
                 var values = valueData[i];
                 values.Add(values.Count > 0 && values[^1] == value ? values[^1] : value);
             }
 
-            if (elapsedSeconds.Count % 1024 == 0)
-            {
-                progress?.Report(10 + (int)(reader.BaseStream.Position * 80 / Math.Max(1, reader.BaseStream.Length)));
-            }
         }
 
         if (elapsedSeconds.Count == 0)
         {
-            throw new InvalidDataException("No data rows could be parsed.");
+            throw new InvalidDataException("No data rows could be parsed." + Environment.NewLine + diagnostics.Describe());
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -152,6 +174,7 @@ internal static class CsvTraceParser
         {
             FileName = Path.GetFileName(path),
             EncodingName = encodingName,
+            Diagnostics = diagnostics,
             ElapsedSeconds = elapsedSeconds.ToArray(),
             DateTexts = dateTexts.ToArray(),
             ClockTimeTexts = clockTexts.ToArray(),

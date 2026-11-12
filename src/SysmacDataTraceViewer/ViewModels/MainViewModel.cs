@@ -20,6 +20,13 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private bool _showTypeSuffix;
     private bool _showRangeBand;
     private bool _isLoading;
+    private bool _hasReadIssues;
+
+    public bool HasReadIssues
+    {
+        get => _hasReadIssues;
+        set => SetProperty(ref _hasReadIssues, value);
+    }
 
     public bool IsLoading
     {

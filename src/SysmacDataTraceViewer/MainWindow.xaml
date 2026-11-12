@@ -100,9 +100,26 @@
         </StackPanel>
 
         <Border Grid.Row="1" BorderBrush="#DDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" />
-                <Button Content="Cancel" Margin="12,0,0,0" Click="CancelLoad_Click">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding StatusText}" ToolTip="{Binding StatusText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Content="Read Details" Margin="12,0,0,0" Click="ReadDetails_Click">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasReadIssues}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+                <Button Grid.Column="2" Content="Cancel" Margin="12,0,0,0" Click="CancelLoad_Click">
                     <Button.Style>
                         <Style TargetType="Button">
                             <Setter Property="Visibility" Value="Collapsed" />
@@ -114,7 +131,7 @@
                         </Style>
                     </Button.Style>
                 </Button>
-            </StackPanel>
+            </Grid>
         </Border>
 
         <Grid Grid.Row="2" Margin="0,0,0,8" IsEnabled="{Binding CanEdit}">

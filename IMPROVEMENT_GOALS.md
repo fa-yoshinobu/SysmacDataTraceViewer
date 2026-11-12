@@ -25,7 +25,7 @@ python -m unittest discover -s tests/release
 | G2 | 日本語の変数名が文字化けしない | 高 | 実装・架空データ検証済み／実物なし |
 | G3 | 大きな CSV でも画面が固まらない | 高 | 完了（2026-11-12） |
 | G4 | README とバージョンの記述が実態と一致している | 中 | 完了（2026-11-12） |
-| G5 | 読めなかった行と予期しないエラーが分かる | 中 | 未着手 |
+| G5 | 読めなかった行と予期しないエラーが分かる | 中 | 完了（2026-11-12） |
 | G6 | `MainWindow` のコードビハインドを減らす（Phase 4 の続き） | 中 | 未着手 |
 | G7 | ファイルをドロップ・関連付けで開ける | 中 | 未着手 |
 | G8 | 細かな整理 | 低 | 未着手 |
@@ -138,13 +138,15 @@ python -m unittest discover -s tests/release
 **対象**: `src/SysmacDataTraceViewer/Services/CsvTraceParser.cs`、`Models/TraceData.cs`、`Services/UiFormattingService.cs`、`App.xaml.cs`、`MainWindow.IO.cs`、`src/SysmacDataTraceViewer.Tests/`
 
 **完了条件**
-- [ ] 読込み結果に、読み飛ばした行数・解釈できなかった値の数・時刻が逆行した行数を含める。最初の数件は行番号も持つ。
-- [ ] 1件以上あれば、ステータス表示に件数を出し、詳細（行番号と理由）を確認できる。
-- [ ] `DispatcherUnhandledException` と `AppDomain.UnhandledException` を処理し、内容を表示する。記録は `%LOCALAPPDATA%\SysmacDataTraceViewer\logs\` に残す（サイズ上限つき）。
-- [ ] ログには CSV の中身（変数名・値）を書かない。ファイル名と行番号、例外の内容まで。
-- [ ] 読み飛ばしの件数が正しく数えられるテストを追加する（列不足、時刻不正、型に合わない値、時刻の逆行）。
+- [x] 読込み結果に、読み飛ばした行数・解釈できなかった値の数・時刻が逆行した行数を含める。最初の数件は行番号も持つ。
+- [x] 1件以上あれば、ステータス表示に件数を出し、詳細（行番号と理由）を確認できる。
+- [x] `DispatcherUnhandledException` と `AppDomain.UnhandledException` を処理し、内容を表示する。記録は `%LOCALAPPDATA%\SysmacDataTraceViewer\logs\` に残す（サイズ上限つき）。
+- [x] ログには CSV の中身（変数名・値）を書かない。ファイル名と行番号、例外の内容まで。
+- [x] 読み飛ばしの件数が正しく数えられるテストを追加する（列不足、時刻不正、型に合わない値、時刻の逆行）。
 
 **検証**: 共通検証。途中の数行を壊した CSV を開き、件数と行番号が表示される。
+
+**検証記録（2026-11-12）**: 読み飛ばし2行・不正値4件・時刻逆行1行の架空CSVで件数と物理行番号を単体テストおよび実MainWindowの詳細ダイアログで確認。詳細は先頭20件、ログは1MiB×2ファイルに制限する。ログは例外の型・HResult・スタックだけを保存し、CSVの内容を含み得るMessageを保存しない。検証ホストのUI例外注入で通知と継続応答、AppDomain側では起動時例外の記録と通知を確認。注入した架空変数名がログにないことを確認。ci.bat（36単体テスト、書式・解析・EXE発行）と36保守テストが成功。
 
 **対象外**: 壊れた行の自動修復。
 
