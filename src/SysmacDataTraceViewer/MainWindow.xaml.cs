@@ -248,7 +248,8 @@ internal sealed partial class MainWindow : Window
     private void DrawTrace(TraceData traceData, List<int> visibleSignalIndexes)
     {
         var model = TracePlotModelBuilder.Build(traceData, visibleSignalIndexes, GetSignalColor);
-        if (model.DefaultXAxis is Axis xAxis)
+        // DefaultXAxis is assigned on the first render, after this hookup runs.
+        if (model.Axes.FirstOrDefault(static axis => axis.Position == AxisPosition.Bottom) is Axis xAxis)
         {
 #pragma warning disable CS0618
             xAxis.AxisChanged += XAxis_AxisChanged;
@@ -403,6 +404,17 @@ internal sealed partial class MainWindow : Window
 
     private void MainWindow_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
+        if (_viewModel.IsLoading)
+        {
+            if (e.Key == Input.Key.Escape)
+            {
+                _loadCancellation?.Cancel();
+            }
+
+            e.Handled = true;
+            return;
+        }
+
         if ((Input.Keyboard.Modifiers & Input.ModifierKeys.Control) != 0)
         {
             if (e.Key == Input.Key.O)

@@ -64,6 +64,9 @@ internal static class TracePlotModelBuilder
                 Color = signalColorProvider(signalIndex)
             };
 
+            var lastValidIndex = -1;
+            var lastAddedIndex = -1;
+            bool? previous = null;
             for (var i = 0; i < traceData.SampleCount; i++)
             {
                 var value = signal.Values[i];
@@ -72,8 +75,20 @@ internal static class TracePlotModelBuilder
                     continue;
                 }
 
-                var y = laneIndex + (value.Value ? -0.32 : 0.32);
-                series.Points.Add(new DataPoint(traceData.ElapsedSeconds[i], y));
+                lastValidIndex = i;
+                if (previous != value)
+                {
+                    var y = laneIndex + (value.Value ? -0.32 : 0.32);
+                    series.Points.Add(new DataPoint(traceData.ElapsedSeconds[i], y));
+                    lastAddedIndex = i;
+                    previous = value;
+                }
+            }
+
+            // Missing samples were previously skipped; preserve that interpolation and the final endpoint.
+            if (lastValidIndex > lastAddedIndex)
+            {
+                series.Points.Add(new DataPoint(traceData.ElapsedSeconds[lastValidIndex], laneIndex + (previous == true ? -0.32 : 0.32)));
             }
 
             model.Series.Add(series);

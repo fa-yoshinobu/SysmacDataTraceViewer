@@ -10,17 +10,47 @@ namespace SysmacDataTraceViewer;
 internal partial class MainWindow
 {
     // File I/O actions: load/save CSV, comments, PNG export.
-    private void LoadCsv_Click(object sender, RoutedEventArgs e)
+    private CancellationTokenSource? _loadCancellation;
+
+    private async void LoadCsv_Click(object sender, RoutedEventArgs e)
     {
+        if (_viewModel.IsLoading)
+        {
+            return;
+        }
+
         var fileName = _dialogService.ShowOpenCsvFileDialog();
         if (fileName is null)
         {
             return;
         }
 
+        await LoadCsvAsync(fileName).ConfigureAwait(true);
+    }
+
+    private async Task LoadCsvAsync(string fileName)
+    {
+        if (_viewModel.IsLoading)
+        {
+            return;
+        }
+
+        using var cancellation = new CancellationTokenSource();
+        _loadCancellation = cancellation;
+        _viewModel.IsLoading = true;
+        _viewModel.StatusText = "Loading... 0%";
+        var progress = new Progress<int>(percent =>
+        {
+            if (ReferenceEquals(_loadCancellation, cancellation))
+            {
+                _viewModel.StatusText = $"Loading... {percent}%";
+            }
+        });
         try
         {
-            _traceData = CsvTraceParser.Parse(fileName);
+            var trace = await Task.Run(() => CsvTraceParser.Parse(fileName, progress, cancellation.Token), cancellation.Token).ConfigureAwait(true);
+            cancellation.Token.ThrowIfCancellationRequested();
+            _traceData = trace;
             ApplyAutoColors(_traceData.BoolSignals.Count);
             InitializeBoolRows(_traceData);
             InitializeValueRows(_traceData);
@@ -34,6 +64,10 @@ internal partial class MainWindow
             _viewModel.HoverDurationText = "-";
             _viewModel.StatusText =
                 UiFormattingService.BuildStatusText(_traceData, _traceData.BoolSignals.Count, _viewModel.ValueSignals.Count);
+        }
+        catch (OperationCanceledException)
+        {
+            _viewModel.StatusText = "Loading canceled.";
         }
         catch (InvalidDataException ex)
         {
@@ -63,6 +97,19 @@ internal partial class MainWindow
         {
             _dialogService.ShowError(ex.Message, CsvLoadErrorTitle);
         }
+        finally
+        {
+            _loadCancellation = null;
+            _viewModel.IsLoading = false;
+        }
+    }
+
+    private void CancelLoad_Click(object sender, RoutedEventArgs e) => _loadCancellation?.Cancel();
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _loadCancellation?.Cancel();
+        base.OnClosed(e);
     }
 
     private void SavePng_Click(object sender, RoutedEventArgs e)

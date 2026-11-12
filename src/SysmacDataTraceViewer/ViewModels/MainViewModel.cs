@@ -19,6 +19,21 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private bool _isSelectedBoolJumpMode;
     private bool _showTypeSuffix;
     private bool _showRangeBand;
+    private bool _isLoading;
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set
+        {
+            if (SetProperty(ref _isLoading, value))
+            {
+                OnPropertyChanged(nameof(CanEdit));
+            }
+        }
+    }
+
+    public bool CanEdit => !IsLoading;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
