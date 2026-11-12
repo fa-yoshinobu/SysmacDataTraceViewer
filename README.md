@@ -9,6 +9,8 @@ Windows上でSysmac StudioのData Trace CSVを確認するWPFアプリです。B
 
 ![Sysmac Data Trace Viewer](docs/images/sysmac-data-trace-viewer.png)
 
+画面例は架空の信号・コメントから生成したデータです。実際の設備・ユーザーデータは使用していません。
+
 ## ダウンロード / Download
 
 [最新版 Windows x64 ZIP](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/latest/download/SysmacDataTraceViewer-win-x64.zip) · [SHA-256](https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/latest/download/SysmacDataTraceViewer-win-x64.zip.sha256)
