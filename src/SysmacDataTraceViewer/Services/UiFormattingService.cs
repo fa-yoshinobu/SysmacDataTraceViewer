@@ -34,7 +34,8 @@ internal static class UiFormattingService
     }
 
     public static string BuildStatusText(TraceData traceData, int visibleBoolCount, int visibleValueCount) =>
-        $"Loaded: {traceData.FileName} / Samples: {traceData.SampleCount:N0} / BOOL: {traceData.BoolSignals.Count} (visible: {visibleBoolCount}) / Values: {traceData.ValueSignals.Count} (visible: {visibleValueCount})";
+        $"Loaded: {traceData.FileName} / Samples: {traceData.SampleCount:N0} / BOOL: {traceData.BoolSignals.Count} (visible: {visibleBoolCount}) / Values: {traceData.ValueSignals.Count} (visible: {visibleValueCount}) / Encoding: {traceData.EncodingName}"
+        + (traceData.CommentEncodingName.Length > 0 ? $" / Comments: {traceData.CommentEncodingName}" : string.Empty);
 
     public static string BuildOriginalTimeText(TraceData traceData, int sampleIndex)
     {

@@ -3,6 +3,8 @@ namespace SysmacDataTraceViewer.Models;
 internal sealed class TraceData
 {
     public required string FileName { get; init; }
+    public string EncodingName { get; init; } = "UTF-8";
+    public string CommentEncodingName { get; set; } = string.Empty;
     public required IReadOnlyList<double> ElapsedSeconds { get; init; }
     public required IReadOnlyList<string> DateTexts { get; init; }
     public required IReadOnlyList<string> ClockTimeTexts { get; init; }

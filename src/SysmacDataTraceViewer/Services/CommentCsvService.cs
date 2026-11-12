@@ -7,6 +7,7 @@ internal sealed record CommentSignalState(string Name, string Comment, bool IsVi
 
 internal sealed class CommentCsvData
 {
+    public string EncodingName { get; init; } = "UTF-8";
     public List<CommentSignalState> BoolSignals { get; } = [];
     public List<CommentSignalState> ValueSignals { get; } = [];
 }
@@ -29,8 +30,9 @@ internal static class CommentCsvService
 
     public static CommentCsvData Load(string filePath)
     {
-        var result = new CommentCsvData();
-        foreach (var rawLine in File.ReadLines(filePath))
+        using var reader = CsvTextReader.Open(filePath, out var encodingName);
+        var result = new CommentCsvData { EncodingName = encodingName };
+        while (reader.ReadLine() is { } rawLine)
         {
             if (string.IsNullOrWhiteSpace(rawLine))
             {

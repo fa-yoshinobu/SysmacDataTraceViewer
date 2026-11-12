@@ -23,6 +23,7 @@ Version date: 2026-02-05
 - Initial status text (before load): `Load a CSV file to display BOOL timeline and value variables.`
 
 ### CSV Input
+- Trace and comment CSV files use BOM-specified encoding when present. Without a BOM, the entire file is validated as strict UTF-8; decoding failure falls back to Shift_JIS (CP932). Invalid bytes are not silently replaced. The detected encoding is displayed in the status text. Comment CSV saving remains UTF-8.
 - Header row starts with `"Index","Date","ClockTime"...`.
 - Columns are `name:type` (example: `test1:BOOL`).
 - Supported types:
@@ -218,6 +219,7 @@ Version date: 2026-02-05
 - 初期ステータス: `Load a CSV file to display BOOL timeline and value variables.`
 
 ### CSV入力
+- トレース・コメントCSVはBOMがあればその文字コードで読み込みます。BOMなしではファイル全体をUTF-8として厳密に検証し、復号できなければShift_JIS（CP932）へ切り替えます。不正なバイトを黙って置換しません。判定した文字コードをステータスに表示します。コメントCSVの保存は従来どおりUTF-8です。
 - ヘッダー行は `"Index","Date","ClockTime"...` で始まる。
 - 列名は `name:type` 形式（例: `test1:BOOL`）。
 - 対応型:

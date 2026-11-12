@@ -8,7 +8,7 @@ internal static class CsvTraceParser
 {
     public static TraceData Parse(string path)
     {
-        using var reader = new StreamReader(path);
+        using var reader = CsvTextReader.Open(path, out var encodingName);
 
         List<string>? headers = null;
         while (reader.ReadLine() is { } line)
@@ -139,6 +139,7 @@ internal static class CsvTraceParser
         return new TraceData
         {
             FileName = Path.GetFileName(path),
+            EncodingName = encodingName,
             ElapsedSeconds = elapsedSeconds.ToArray(),
             DateTexts = dateTexts.ToArray(),
             ClockTimeTexts = clockTexts.ToArray(),

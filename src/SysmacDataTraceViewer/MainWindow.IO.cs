@@ -271,6 +271,7 @@ internal partial class MainWindow
         try
         {
             var data = CommentCsvService.Load(commentFilePath);
+            _traceData.CommentEncodingName = data.EncodingName;
             ApplyCommentData(data);
 
             UpdateDisplayLabels();
