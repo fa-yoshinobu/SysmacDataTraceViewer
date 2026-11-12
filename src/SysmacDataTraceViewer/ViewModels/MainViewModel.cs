@@ -5,7 +5,7 @@ using System.Windows.Input;
 
 namespace SysmacDataTraceViewer.ViewModels;
 
-internal sealed class MainViewModel : INotifyPropertyChanged
+internal sealed partial class MainViewModel : INotifyPropertyChanged
 {
     private string _statusText = "Load a CSV file to display BOOL timeline and value variables.";
     private string _cursorTimeText = "-";
@@ -19,6 +19,28 @@ internal sealed class MainViewModel : INotifyPropertyChanged
     private bool _isSelectedBoolJumpMode;
     private bool _showTypeSuffix;
     private bool _showRangeBand;
+    private bool _isLoading;
+    private bool _hasReadIssues;
+
+    public bool HasReadIssues
+    {
+        get => _hasReadIssues;
+        set => SetProperty(ref _hasReadIssues, value);
+    }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        set
+        {
+            if (SetProperty(ref _isLoading, value))
+            {
+                OnPropertyChanged(nameof(CanEdit));
+            }
+        }
+    }
+
+    public bool CanEdit => !IsLoading;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

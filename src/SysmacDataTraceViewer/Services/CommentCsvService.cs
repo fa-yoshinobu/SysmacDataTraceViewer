@@ -7,6 +7,7 @@ internal sealed record CommentSignalState(string Name, string Comment, bool IsVi
 
 internal sealed class CommentCsvData
 {
+    public string EncodingName { get; init; } = "UTF-8";
     public List<CommentSignalState> BoolSignals { get; } = [];
     public List<CommentSignalState> ValueSignals { get; } = [];
 }
@@ -24,13 +25,25 @@ internal static class CommentCsvService
         lines.AddRange(valueSignals.Select(static s =>
             BuildLine("VALUE", s.Name, s.Comment, s.IsVisible, string.Empty, s.Order)));
 
-        File.WriteAllLines(filePath, lines, System.Text.Encoding.UTF8);
+        var destination = Path.GetFullPath(filePath);
+        var temporary = Path.Combine(Path.GetDirectoryName(destination)!, $".comments-{Guid.NewGuid():N}.tmp");
+        try
+        {
+            File.WriteAllLines(temporary, lines, System.Text.Encoding.UTF8);
+            if (File.Exists(destination)) File.Replace(temporary, destination, null);
+            else File.Move(temporary, destination);
+        }
+        finally
+        {
+            if (File.Exists(temporary)) File.Delete(temporary);
+        }
     }
 
     public static CommentCsvData Load(string filePath)
     {
-        var result = new CommentCsvData();
-        foreach (var rawLine in File.ReadLines(filePath))
+        using var reader = CsvTextReader.Open(filePath, out var encodingName);
+        var result = new CommentCsvData { EncodingName = encodingName };
+        foreach (var rawLine in CsvLineParser.ReadRecords(reader))
         {
             if (string.IsNullOrWhiteSpace(rawLine))
             {

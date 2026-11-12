@@ -23,7 +23,7 @@ public sealed class FormattingAndColorServiceTests
         Assert.Equal("Machine.Flag:BOOL", UiFormattingService.FormatVariableName("Machine.Flag:BOOL", showTypeSuffix: true));
         Assert.Equal("Flag", UiFormattingService.BuildDefaultComment("Machine.Flag:BOOL"));
         Assert.Equal("Name", UiFormattingService.BuildDefaultComment("Name"));
-        Assert.Equal("Loaded: trace.csv / Samples: 2 / BOOL: 1 (visible: 1) / Values: 1 (visible: 1)", UiFormattingService.BuildStatusText(trace, 1, 1));
+        Assert.Equal("Loaded: trace.csv / Samples: 2 / BOOL: 1 (visible: 1) / Values: 1 (visible: 1) / Encoding: UTF-8", UiFormattingService.BuildStatusText(trace, 1, 1));
         Assert.Equal("2026/02/05 12:00:00.000", UiFormattingService.BuildOriginalTimeText(trace, 0));
         Assert.Equal("12:00:01.000", UiFormattingService.BuildOriginalTimeText(trace, 1));
     }

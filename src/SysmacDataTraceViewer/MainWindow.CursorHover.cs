@@ -126,7 +126,7 @@ internal partial class MainWindow
         _viewModel.CursorTimeText = elapsed.ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture);
         _viewModel.CursorClockText = UiFormattingService.BuildOriginalTimeText(_traceData, sampleIndex);
         _viewModel.CursorSampleText = sampleIndex.ToString(CultureInfo.InvariantCulture);
-        UpdateValueRows(_traceData, sampleIndex);
+        _viewModel.UpdateValueRows(_traceData, sampleIndex);
         UpdateNameLaneValues(sampleIndex);
 
         if (_cursorAnnotation is not null)
@@ -229,7 +229,7 @@ internal partial class MainWindow
         _lastHoverStartIndex = start;
         _lastHoverEndExclusive = endExclusive;
         _lastHoverState = hoverState;
-        var signalLabel = GetBoolLaneLabel(signalIndex);
+        var signalLabel = _viewModel.GetBoolLaneLabel(signalIndex);
         var stateText = current.Value ? "ON" : "OFF";
         _viewModel.HoverStateText = $"{signalLabel}: {stateText}";
         _viewModel.HoverDurationText = TimeSpan.FromSeconds(duration).ToString(@"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture);

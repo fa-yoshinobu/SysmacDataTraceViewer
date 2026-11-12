@@ -6,411 +6,763 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
-        Title="Sysmac Data Trace Viewer"
+        Title="{Binding WindowTitle, FallbackValue='Sysmac Data Trace Viewer'}"
         Icon="app.ico"
-        Background="#F5F6F8"
+        Background="{StaticResource WindowBackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="Segoe UI"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True"
         Width="1400"
         Height="840"
         MinWidth="1000"
         MinHeight="700"
-        PreviewKeyDown="MainWindow_PreviewKeyDown">
-    <Window.Resources>
-        <Style x:Key="GridCellEditorTextBoxStyle" TargetType="TextBox">
-            <Setter Property="Margin" Value="0,1,0,1" />
-            <Setter Property="Padding" Value="6,3" />
-            <Setter Property="MinHeight" Value="26" />
-            <Setter Property="HorizontalAlignment" Value="Stretch" />
-            <Setter Property="VerticalContentAlignment" Value="Center" />
-            <Setter Property="Background" Value="#FCFCFD" />
-            <Setter Property="BorderBrush" Value="#C9CFDA" />
-            <Setter Property="BorderThickness" Value="1" />
-        </Style>
-        <Style x:Key="HexEditorTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource GridCellEditorTextBoxStyle}">
-            <Setter Property="FontFamily" Value="Consolas" />
-        </Style>
-    </Window.Resources>
+        PreviewKeyDown="MainWindow_PreviewKeyDown"
+        AllowDrop="True"
+        PreviewDragOver="TraceFile_DragOver"
+        PreviewDrop="TraceFile_Drop">
+  <Window.Resources>
+    <!-- Cell editors in the variable settings lists -->
+    <Style x:Key="GridCellEditorTextBoxStyle" TargetType="TextBox">
+      <Setter Property="Margin" Value="0,1,0,1" />
+      <Setter Property="Padding" Value="6,3" />
+      <Setter Property="MinHeight" Value="26" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Background" Value="#FCFCFD" />
+      <Setter Property="BorderBrush" Value="#C9CFDA" />
+      <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style x:Key="HexEditorTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource GridCellEditorTextBoxStyle}">
+      <Setter Property="FontFamily" Value="Consolas" />
+    </Style>
+
+    <!-- White panel with a light border -->
+    <Style x:Key="CardBorderStyle" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource PanelBackgroundBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource PanelBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+    </Style>
+
+    <Style x:Key="PanelHeaderTextStyle" TargetType="TextBlock">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="SectionTitleTextStyle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+      <Setter Property="Padding" Value="10,3" />
+      <Setter Property="MinHeight" Value="28" />
+      <Setter Property="Margin" Value="0,0,6,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="SmallButtonStyle" TargetType="Button">
+      <Setter Property="Padding" Value="8,2" />
+      <Setter Property="MinHeight" Value="24" />
+      <Setter Property="Margin" Value="6,0,0,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="ToolbarLabelTextStyle" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,0,6,0" />
+    </Style>
+
+    <Style x:Key="ToolbarComboBoxStyle" TargetType="ComboBox">
+      <Setter Property="MinHeight" Value="26" />
+      <Setter Property="Margin" Value="0,0,14,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="ToolbarSeparatorStyle" TargetType="Rectangle">
+      <Setter Property="Width" Value="1" />
+      <Setter Property="Height" Value="20" />
+      <Setter Property="Fill" Value="{StaticResource PanelBorderBrush}" />
+      <Setter Property="Margin" Value="6,0,12,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Cursor readouts: small caption + fixed-width value so the bar does not jitter -->
+    <Style x:Key="ReadoutCaptionTextStyle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="Margin" Value="0,0,5,0" />
+    </Style>
+    <Style x:Key="ReadoutValueTextStyle" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Consolas" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="MinWidth" Value="72" />
+      <Setter Property="Margin" Value="0,0,14,0" />
+    </Style>
+    <Style x:Key="ReadoutGroupBorderStyle" TargetType="Border">
+      <Setter Property="Background" Value="#F7F9FB" />
+      <Setter Property="BorderBrush" Value="#E3E7EC" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="4" />
+      <Setter Property="Padding" Value="8,3,0,3" />
+      <Setter Property="Margin" Value="0,2,8,2" />
+    </Style>
+
+    <Style x:Key="SplitterStyle" TargetType="GridSplitter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+      <Setter Property="ShowsPreview" Value="True" />
+      <Setter Property="Focusable" Value="False" />
+      <Style.Triggers>
+        <Trigger Property="IsMouseOver" Value="True">
+          <Setter Property="Background" Value="#C9D6E6" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
+
+    <Style x:Key="SettingsListViewStyle" TargetType="ListView">
+      <Setter Property="BorderBrush" Value="#E3E7EC" />
+      <Setter Property="Background" Value="White" />
+    </Style>
+
+    <Style x:Key="ValueGridStyle" TargetType="DataGrid">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#E3E7EC" />
+      <Setter Property="GridLinesVisibility" Value="Horizontal" />
+      <Setter Property="HorizontalGridLinesBrush" Value="#EEF1F4" />
+      <Setter Property="AlternatingRowBackground" Value="#FAFBFC" />
+      <Setter Property="RowHeaderWidth" Value="0" />
+      <Setter Property="RowHeight" Value="24" />
+    </Style>
+
+    <Style x:Key="ValueCellTextStyle" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Consolas" />
+      <Setter Property="Margin" Value="6,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="NameCellTextStyle" TargetType="TextBlock">
+      <Setter Property="Margin" Value="6,0" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+      <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}" />
+    </Style>
+  </Window.Resources>
+
+  <DockPanel>
+    <!-- Menu -->
+    <Border DockPanel.Dock="Top"
+            Background="{StaticResource PanelBackgroundBrush}"
+            BorderBrush="{StaticResource PanelBorderBrush}"
+            BorderThickness="0,0,0,1">
+      <Menu Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" Padding="4,2" IsEnabled="{Binding CanEdit}">
+        <MenuItem Header="_File">
+          <MenuItem Header="_Open Trace CSV..." Command="{Binding OpenTraceCommand}" InputGestureText="Ctrl+O" />
+          <MenuItem Header="_Export Chart PNG">
+            <MenuItem Header="Export _Visible Range PNG..." Command="{Binding ExportVisiblePngCommand}" InputGestureText="Ctrl+E" />
+            <MenuItem Header="Export _Full Range PNG..." Command="{Binding ExportFullPngCommand}" />
+          </MenuItem>
+          <Separator />
+          <MenuItem Header="_Load Comments (CSV / smc2)..." Command="{Binding LoadCommentsCommand}" />
+          <MenuItem Header="_Save Comments..." Command="{Binding SaveCommentsCommand}" />
+          <Separator />
+          <MenuItem Header="E_xit" Command="{Binding CloseCommand}" />
+        </MenuItem>
+        <MenuItem Header="_View">
+          <MenuItem Header="Show Type Suffix"
+                    IsCheckable="True"
+                    IsChecked="{Binding ShowTypeSuffix, Mode=TwoWay}" />
+          <MenuItem Header="Show Range Band"
+                    IsCheckable="True"
+                    IsChecked="{Binding ShowRangeBand, Mode=TwoWay}" />
+        </MenuItem>
+        <MenuItem Header="_Help">
+          <MenuItem Header="_About" Command="{Binding AboutCommand}" />
+        </MenuItem>
+      </Menu>
+    </Border>
+
+    <!-- Footer: mouse and keyboard hints -->
+    <Border DockPanel.Dock="Bottom"
+            Background="{StaticResource PanelBackgroundBrush}"
+            BorderBrush="{StaticResource PanelBorderBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="10,4">
+      <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" TextTrimming="CharacterEllipsis">
+        <Run Text="Left drag:" FontWeight="SemiBold" /><Run Text=" data cursor (red)" />
+        <Run Text="   Right drag:" FontWeight="SemiBold" /><Run Text=" delta cursor (blue)" />
+        <Run Text="   Shift+Left / Shift+Right:" FontWeight="SemiBold" /><Run Text=" previous / next change" />
+        <Run Text="   Ctrl+O:" FontWeight="SemiBold" /><Run Text=" open" />
+        <Run Text="   Ctrl+E:" FontWeight="SemiBold" /><Run Text=" export PNG" />
+        <Run Text="   Timeline starts at 00:00." />
+      </TextBlock>
+    </Border>
+
     <Grid Margin="8">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="3*" MinHeight="220" />
+        <RowDefinition x:Name="BottomPanelSplitterRow" Height="6" />
+        <RowDefinition x:Name="BottomPanelRow" Height="2*" MinHeight="140" />
+      </Grid.RowDefinitions>
+
+      <!-- Toolbar and cursor readouts -->
+      <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}" Padding="8,6" Margin="0,0,0,8" IsEnabled="{Binding CanEdit}">
+        <StackPanel>
+          <WrapPanel Orientation="Horizontal">
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Content="{Binding BoolPanelToggleText}"
+                    Command="{Binding ToggleBoolPanelCommand}"
+                    ToolTip="Show or hide the value panel on the right" />
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Content="{Binding BottomPanelToggleText}"
+                    Command="{Binding ToggleBottomPanelCommand}"
+                    ToolTip="Show or hide the variable visibility / comments panel" />
+
+            <Rectangle Style="{StaticResource ToolbarSeparatorStyle}" />
+
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Command="{Binding SwapCursorsCommand}"
+                    ToolTip="Swap the red data cursor and the blue delta cursor">
+              <StackPanel Orientation="Horizontal">
+                <Rectangle Width="3" Height="14" Fill="{StaticResource PrimaryCursorBrush}" Margin="0,0,2,0" VerticalAlignment="Center" />
+                <Rectangle Width="3" Height="14" Fill="{StaticResource DeltaCursorBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                <TextBlock Text="Swap Red/Blue Cursors" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Command="{Binding JumpPrevChangeCommand}"
+                    ToolTip="Move the data cursor to the previous change (Shift+Left)">
+              <TextBlock><Run Text="&#x25C0;" Foreground="{StaticResource TextSecondaryBrush}" /><Run Text=" Previous Change" /></TextBlock>
+            </Button>
+            <Button Style="{StaticResource ToolbarButtonStyle}"
+                    Command="{Binding JumpNextChangeCommand}"
+                    ToolTip="Move the data cursor to the next change (Shift+Right)">
+              <TextBlock><Run Text="Next Change " /><Run Text="&#x25B6;" Foreground="{StaticResource TextSecondaryBrush}" /></TextBlock>
+            </Button>
+
+            <Rectangle Style="{StaticResource ToolbarSeparatorStyle}" />
+
+            <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+              <TextBlock Style="{StaticResource ToolbarLabelTextStyle}" Text="Label Mode:" />
+              <ComboBox x:Name="LabelModeComboBox"
+                        Style="{StaticResource ToolbarComboBoxStyle}"
+                        Width="130"
+                        ToolTip="Label the chart lanes by variable name or by comment"
+                        SelectionChanged="LabelModeComboBox_SelectionChanged">
+                <ComboBoxItem Content="Variable Name" IsSelected="True" />
+                <ComboBoxItem Content="Comment" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,2,0,2">
+              <TextBlock Style="{StaticResource ToolbarLabelTextStyle}" Text="Change Jump Scope:" />
+              <ComboBox x:Name="JumpScopeComboBox"
+                        Style="{StaticResource ToolbarComboBoxStyle}"
+                        Width="190"
+                        ToolTip="Which BOOL variables Previous/Next Change looks at"
+                        SelectionChanged="JumpScopeComboBox_SelectionChanged">
+                <ComboBoxItem Content="Visible BOOL Variables" IsSelected="True" />
+                <ComboBoxItem Content="Selected BOOL Variable" />
+              </ComboBox>
+            </StackPanel>
+          </WrapPanel>
+
+          <WrapPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <!-- Primary (red) cursor -->
+            <Border Style="{StaticResource ReadoutGroupBorderStyle}" ToolTip="Data cursor (red line, left drag)">
+              <StackPanel Orientation="Horizontal">
+                <Rectangle Width="4" Height="16" RadiusX="1" RadiusY="1" Fill="{StaticResource PrimaryCursorBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <TextBlock Style="{StaticResource ReadoutCaptionTextStyle}" Text="Elapsed Time" />
+                <TextBlock Style="{StaticResource ReadoutValueTextStyle}" Text="{Binding CursorTimeText}" />
+                <TextBlock Style="{StaticResource ReadoutCaptionTextStyle}" Text="Recorded Time" />
+                <TextBlock Style="{StaticResource ReadoutValueTextStyle}" MinWidth="150" Text="{Binding CursorClockText}" />
+                <TextBlock Style="{StaticResource ReadoutCaptionTextStyle}" Text="Sample Index" />
+                <TextBlock Style="{StaticResource ReadoutValueTextStyle}" MinWidth="56" Text="{Binding CursorSampleText}" />
+              </StackPanel>
+            </Border>
+            <!-- Delta (blue) cursor -->
+            <Border Style="{StaticResource ReadoutGroupBorderStyle}" ToolTip="Time between the red data cursor and the blue delta cursor (right drag)">
+              <StackPanel Orientation="Horizontal">
+                <Rectangle Width="4" Height="16" RadiusX="1" RadiusY="1" Fill="{StaticResource DeltaCursorBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <TextBlock Style="{StaticResource ReadoutCaptionTextStyle}" Text="Cursor Delta" />
+                <TextBlock Style="{StaticResource ReadoutValueTextStyle}" Text="{Binding CursorDeltaText}" />
+              </StackPanel>
+            </Border>
+            <!-- Hover -->
+            <Border Style="{StaticResource ReadoutGroupBorderStyle}" ToolTip="BOOL state under the mouse pointer in the time chart">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Style="{StaticResource ReadoutCaptionTextStyle}" Text="Hover State" />
+                <TextBlock Style="{StaticResource ReadoutValueTextStyle}" MinWidth="110" Text="{Binding HoverStateText}" />
+                <TextBlock Style="{StaticResource ReadoutCaptionTextStyle}" Text="State Duration" />
+                <TextBlock Style="{StaticResource ReadoutValueTextStyle}" Text="{Binding HoverDurationText}" />
+              </StackPanel>
+            </Border>
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Status bar: turns amber when the CSV had read issues -->
+      <Border Grid.Row="1" CornerRadius="6" BorderThickness="1" Padding="10,5" Margin="0,0,0,8">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Background" Value="#EEF2F6" />
+            <Setter Property="BorderBrush" Value="#DDE3EA" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding HasReadIssues}" Value="True">
+                <Setter Property="Background" Value="{StaticResource WarningBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource WarningBorderBrush}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Grid.Column="0"
+                     Text="&#x26A0;"
+                     FontSize="14"
+                     Foreground="{StaticResource WarningTextBrush}"
+                     Margin="0,0,8,0"
+                     VerticalAlignment="Center">
+            <TextBlock.Style>
+              <Style TargetType="TextBlock">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding HasReadIssues}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </TextBlock.Style>
+          </TextBlock>
+          <TextBlock Grid.Column="1"
+                     Text="{Binding StatusText}"
+                     ToolTip="{Binding StatusText}"
+                     TextTrimming="CharacterEllipsis"
+                     VerticalAlignment="Center" />
+          <ProgressBar Grid.Column="2"
+                       Width="120"
+                       Height="6"
+                       Margin="12,0,0,0"
+                       IsIndeterminate="True"
+                       VerticalAlignment="Center">
+            <ProgressBar.Style>
+              <Style TargetType="ProgressBar">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </ProgressBar.Style>
+          </ProgressBar>
+          <Button Grid.Column="3" Content="Read Details" Padding="10,2" Margin="12,0,0,0" Click="ReadDetails_Click"
+                  ToolTip="Show the rows and values that could not be read">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding HasReadIssues}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+          <Button Grid.Column="4" Content="Cancel" Padding="10,2" Margin="12,0,0,0" Click="CancelLoad_Click">
+            <Button.Style>
+              <Style TargetType="Button">
+                <Setter Property="Visibility" Value="Collapsed" />
+                <Style.Triggers>
+                  <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                  </DataTrigger>
+                </Style.Triggers>
+              </Style>
+            </Button.Style>
+          </Button>
+        </Grid>
+      </Border>
+
+      <Grid Grid.Row="2" IsEnabled="{Binding CanEdit}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition x:Name="BoolPanelSplitterColumn" Width="6" />
+          <ColumnDefinition x:Name="BoolPanelColumn" Width="320" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="3*" MinHeight="220" />
-            <RowDefinition x:Name="BottomPanelSplitterRow" Height="6" />
-            <RowDefinition x:Name="BottomPanelRow" Height="2*" MinHeight="140" />
-            <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Vertical" Margin="0,0,0,8">
-            <Menu Background="#ECEFF3" Foreground="#1F2937">
-                <MenuItem Header="_File">
-                    <MenuItem Header="_Open Trace CSV..." Command="{Binding OpenTraceCommand}" InputGestureText="Ctrl+O" />
-                    <MenuItem Header="_Export Chart PNG">
-                        <MenuItem Header="Export _Visible Range PNG..." Command="{Binding ExportVisiblePngCommand}" InputGestureText="Ctrl+E" />
-                        <MenuItem Header="Export _Full Range PNG..." Command="{Binding ExportFullPngCommand}" />
-                    </MenuItem>
-                    <MenuItem Header="_Load Comments..." Command="{Binding LoadCommentsCommand}" />
-                    <MenuItem Header="_Save Comments..." Command="{Binding SaveCommentsCommand}" />
-                    <Separator />
-                    <MenuItem Header="E_xit" Command="{Binding CloseCommand}" />
-                </MenuItem>
-                <MenuItem Header="_View">
-                    <MenuItem Header="Show Type Suffix"
-                              IsCheckable="True"
-                              IsChecked="{Binding ShowTypeSuffix, Mode=TwoWay}" />
-                    <MenuItem Header="Show Range Band"
-                              IsCheckable="True"
-                              IsChecked="{Binding ShowRangeBand, Mode=TwoWay}" />
-                </MenuItem>
-                <MenuItem Header="_Help">
-                    <MenuItem Header="_About" Command="{Binding AboutCommand}" />
-                </MenuItem>
-            </Menu>
+        <Grid Grid.Column="0" Grid.Row="0" Margin="0,0,2,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="NameAreaColumn" Width="180" MinWidth="150" MaxWidth="420" />
+            <ColumnDefinition Width="6" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
 
-            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <Button Width="140" Height="30" Margin="0,0,0,0" Content="{Binding BoolPanelToggleText}" Command="{Binding ToggleBoolPanelCommand}" />
-                <Button Width="180" Height="30" Margin="6,0,0,0" Content="{Binding BottomPanelToggleText}" Command="{Binding ToggleBottomPanelCommand}" />
-                <Button Width="140" Height="30" Margin="6,0,0,0" Content="Swap Red/Blue Cursors" Command="{Binding SwapCursorsCommand}" />
-                <Button Width="130" Height="30" Margin="6,0,0,0" Content="Previous Change" Command="{Binding JumpPrevChangeCommand}" />
-                <Button Width="120" Height="30" Margin="6,0,0,0" Content="Next Change" Command="{Binding JumpNextChangeCommand}" />
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <TextBlock VerticalAlignment="Center" Text="Label Mode:" />
-                <ComboBox x:Name="LabelModeComboBox" Width="130" Margin="6,0,0,0" VerticalAlignment="Center" SelectionChanged="LabelModeComboBox_SelectionChanged">
-                    <ComboBoxItem Content="Variable Name" IsSelected="True" />
-                    <ComboBoxItem Content="Comment" />
-                </ComboBox>
-                <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="Change Jump Scope:" />
-                <ComboBox x:Name="JumpScopeComboBox" Width="190" Margin="6,0,0,0" VerticalAlignment="Center" SelectionChanged="JumpScopeComboBox_SelectionChanged">
-                    <ComboBoxItem Content="Visible BOOL Variables" IsSelected="True" />
-                    <ComboBoxItem Content="Selected BOOL Variable" />
-                </ComboBox>
-                <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="Elapsed Time:" />
-                <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding CursorTimeText}" />
-                <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="Recorded Time:" />
-                <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding CursorClockText}" />
-                <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="Sample Index:" />
-                <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding CursorSampleText}" />
-                <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="Cursor Delta:" />
-                <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding CursorDeltaText}" />
-                <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" Text="Hover State:" />
-                <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding HoverStateText}" />
-                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="State Duration:" />
-                <TextBlock Margin="4,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="{Binding HoverDurationText}" />
-            </StackPanel>
-        </StackPanel>
-
-        <Border Grid.Row="1" BorderBrush="#DDD" BorderThickness="1" Padding="8" Margin="0,0,0,8">
-            <TextBlock Text="{Binding StatusText}" />
-        </Border>
-
-        <Grid Grid.Row="2" Margin="0,0,0,8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition x:Name="BoolPanelSplitterColumn" Width="6" />
-                <ColumnDefinition x:Name="BoolPanelColumn" Width="320" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
+          <!-- The name lane and the chart keep the same padding and header height so lane rows line up with the chart lanes. -->
+          <Border Grid.Column="0" Grid.Row="0" Style="{StaticResource CardBorderStyle}" Padding="4">
+            <Grid>
+              <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <Grid Grid.Column="0" Grid.Row="0" Margin="0,0,8,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition x:Name="NameAreaColumn" Width="180" MinWidth="150" MaxWidth="420" />
-                    <ColumnDefinition Width="6" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <Border Grid.Column="0" Grid.Row="0" BorderBrush="#DDD" BorderThickness="1" Background="#FAFAFA" Padding="4">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="BOOL Variables"
-                                   FontWeight="SemiBold"
-                                   Foreground="#4B5563"
-                                   Margin="2,0,2,4" />
-                        <ScrollViewer x:Name="NameLaneScrollViewer"
-                                      Grid.Row="1"
-                                      HorizontalScrollBarVisibility="Hidden"
-                                      VerticalScrollBarVisibility="Disabled"
-                                      CanContentScroll="False">
-                            <Grid x:Name="NameLaneGrid" Margin="2" />
-                        </ScrollViewer>
-                    </Grid>
-                </Border>
-                <ScrollBar x:Name="NameLaneScrollBar"
-                           Grid.Column="0"
-                           Grid.Row="1"
-                           Height="14"
-                           Orientation="Horizontal"
-                           Minimum="0"
-                           Maximum="1"
-                           ViewportSize="1"
-                           ValueChanged="NameLaneScrollBar_ValueChanged" />
-
-                <GridSplitter Grid.Column="1"
-                              Grid.RowSpan="2"
-                              Width="6"
-                              HorizontalAlignment="Stretch"
-                              VerticalAlignment="Stretch"
-                              Background="#E0E0E0"
-                              ResizeDirection="Columns"
-                              ResizeBehavior="PreviousAndNext"
-                              ShowsPreview="True" />
-
-                <Border Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" BorderBrush="#DDD" BorderThickness="1" Padding="4">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Time Chart"
-                                   FontWeight="SemiBold"
-                                   Foreground="#4B5563"
-                                   Margin="2,0,2,4" />
-                        <oxy:PlotView x:Name="TracePlot" Grid.Row="1" />
-                    </Grid>
-                </Border>
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <TextBlock Text="BOOL Variables"
+                         Style="{StaticResource PanelHeaderTextStyle}"
+                         Margin="2,0,2,4" />
+              <ScrollViewer x:Name="NameLaneScrollViewer"
+                            Grid.Row="1"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Disabled"
+                            CanContentScroll="False">
+                <!-- Keep fractional row heights aligned with OxyPlot instead of rounding each lane. -->
+                <Grid x:Name="NameLaneGrid" Margin="2" UseLayoutRounding="False" />
+              </ScrollViewer>
             </Grid>
+          </Border>
+          <ScrollBar x:Name="NameLaneScrollBar"
+                     Grid.Column="0"
+                     Grid.Row="1"
+                     Height="14"
+                     Margin="0,4,0,0"
+                     Orientation="Horizontal"
+                     Minimum="0"
+                     Maximum="1"
+                     ViewportSize="1"
+                     ValueChanged="NameLaneScrollBar_ValueChanged" />
 
-            <ScrollBar x:Name="TimeScrollBar"
-                       Grid.Column="0"
-                       Grid.Row="1"
-                       Margin="0,6,0,0"
-                       Height="16"
-                       Orientation="Horizontal"
-                       Minimum="0"
-                       Maximum="1"
-                       ViewportSize="1"
-                       SmallChange="0.1"
-                       LargeChange="0.5"
-                       ValueChanged="TimeScrollBar_ValueChanged" />
+          <GridSplitter Grid.Column="1"
+                        Grid.RowSpan="2"
+                        Width="6"
+                        Style="{StaticResource SplitterStyle}"
+                        ResizeDirection="Columns"
+                        ResizeBehavior="PreviousAndNext"
+                        ToolTip="Drag to resize the name area" />
 
-            <GridSplitter x:Name="BoolPanelSplitter"
-                          Grid.Column="1"
-                          Grid.RowSpan="2"
-                          Width="6"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          Background="#E0E0E0"
-                          ResizeDirection="Columns"
-                          ResizeBehavior="PreviousAndNext"
-                          ShowsPreview="True" />
-
-            <Border x:Name="BoolPanelBorder" Grid.Column="2" Grid.RowSpan="2" BorderBrush="#DDD" BorderThickness="1" Padding="8">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-                    <TextBlock Text="Value Variables at Cursor"
-                               FontWeight="SemiBold"
-                               Foreground="#4B5563"
-                               Margin="0,0,0,6" />
-                    <DataGrid Grid.Row="1"
-                              ItemsSource="{Binding VisibleValueSignals}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              HeadersVisibility="Column"
-                              EnableRowVirtualization="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Variables" Binding="{Binding DisplayName}" Width="2*" />
-                            <DataGridTextColumn Header="Value" Binding="{Binding ValueText}" Width="*" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </Border>
+          <Border Grid.Column="2" Grid.Row="0" Style="{StaticResource CardBorderStyle}" Padding="4">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <TextBlock Text="Time Chart"
+                         Style="{StaticResource PanelHeaderTextStyle}"
+                         Margin="2,0,2,4" />
+              <oxy:PlotView x:Name="TracePlot" Grid.Row="1" Background="White" />
+              <!-- Empty state; hit testing is off so file drops still reach the window -->
+              <Border Grid.Row="1"
+                      IsHitTestVisible="False"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Background="#F7F9FB"
+                      BorderBrush="#D5DCE5"
+                      BorderThickness="1"
+                      CornerRadius="8"
+                      Padding="28,20">
+                <Border.Style>
+                  <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding HasTrace}" Value="False">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <StackPanel>
+                  <TextBlock HorizontalAlignment="Center"
+                             FontSize="15"
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource TextPrimaryBrush}"
+                             Text="No trace loaded" />
+                  <TextBlock HorizontalAlignment="Center"
+                             Margin="0,6,0,0"
+                             Foreground="{StaticResource TextSecondaryBrush}"
+                             TextAlignment="Center"
+                             Text="Drop a Sysmac Studio Data Trace CSV here,&#x0a;or use File &#x2192; Open Trace CSV (Ctrl+O)." />
+                </StackPanel>
+              </Border>
+            </Grid>
+          </Border>
+          <ScrollBar x:Name="TimeScrollBar"
+                     Grid.Column="2"
+                     Grid.Row="1"
+                     Margin="0,4,0,0"
+                     Height="16"
+                     Orientation="Horizontal"
+                     Minimum="0"
+                     Maximum="1"
+                     ViewportSize="1"
+                     SmallChange="0.1"
+                     LargeChange="0.5"
+                     ValueChanged="TimeScrollBar_ValueChanged" />
         </Grid>
 
-        <GridSplitter x:Name="BottomPanelSplitter"
-                      Grid.Row="3"
-                      Height="6"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Center"
-                      Background="#E0E0E0"
-                      ResizeDirection="Rows"
-                      ResizeBehavior="PreviousAndNext"
-                      ShowsPreview="True" />
+        <GridSplitter x:Name="BoolPanelSplitter"
+                      Grid.Column="1"
+                      Grid.RowSpan="2"
+                      Width="6"
+                      Style="{StaticResource SplitterStyle}"
+                      ResizeDirection="Columns"
+                      ResizeBehavior="PreviousAndNext" />
 
-        <Border x:Name="BottomPanelBorder" Grid.Row="4" BorderBrush="#DDD" BorderThickness="1" Padding="8">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock VerticalAlignment="Center" FontWeight="Bold" Text="Variable Visibility / Comments" />
-                </StackPanel>
-
-                <Grid Grid.Row="1" Margin="0,8,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="6" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <Grid Grid.Column="0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center" FontWeight="Bold" Text="BOOL Variables" />
-                            <Button Margin="8,0,0,0" Padding="6,2" Content="Select All" Command="{Binding SelectAllBoolCommand}" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Clear All" Command="{Binding ClearAllBoolCommand}" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Hide No Change" Command="{Binding HideNoChangeBoolCommand}" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Auto Assign Colors" Command="{Binding AutoBoolColorsCommand}" />
-                        </StackPanel>
-                        <ListView x:Name="BoolSignalsListBox"
-                                  Grid.Row="1"
-                                  Margin="0,6,0,0"
-                                  ItemsSource="{Binding BoolSignals}"
-                                  SelectionChanged="BoolSignalsListBox_SelectionChanged"
-                                  AllowDrop="True"
-                                  PreviewMouseLeftButtonDown="BoolSignalsListBox_PreviewMouseLeftButtonDown"
-                                  PreviewMouseMove="BoolSignalsListBox_PreviewMouseMove"
-                                  Drop="BoolSignalsListBox_Drop"
-                                  DragOver="BoolSignalsListBox_DragOver">
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem">
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                    <Setter Property="VerticalContentAlignment" Value="Center" />
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="Visible" Width="60">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <CheckBox IsChecked="{Binding IsVisible, Mode=TwoWay}"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Name" Width="240">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center">
-                                                    <TextBlock.Style>
-                                                        <Style TargetType="TextBlock">
-                                                            <Setter Property="Foreground" Value="Black" />
-                                                            <Style.Triggers>
-                                                                <MultiDataTrigger>
-                                                                    <MultiDataTrigger.Conditions>
-                                                                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True" />
-                                                                        <Condition Binding="{Binding DataContext.IsSelectedBoolJumpMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="True" />
-                                                                    </MultiDataTrigger.Conditions>
-                                                                    <Setter Property="Foreground" Value="Red" />
-                                                                    <Setter Property="FontWeight" Value="Bold" />
-                                                                </MultiDataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBlock.Style>
-                                                </TextBlock>
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Color" Width="95">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBox Text="{Binding ColorHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource HexEditorTextBoxStyle}"
-                                                         ToolTip="#RRGGBB" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Comment" Width="360">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBox Text="{Binding CommentText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource GridCellEditorTextBoxStyle}"
-                                                         ToolTip="Comment" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                    </Grid>
-
-                    <Grid Grid.Column="2">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock VerticalAlignment="Center" FontWeight="Bold" Text="Value Variables" />
-                            <Button Margin="8,0,0,0" Padding="6,2" Content="Select All" Command="{Binding SelectAllValueCommand}" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Clear All" Command="{Binding ClearAllValueCommand}" />
-                            <Button Margin="6,0,0,0" Padding="6,2" Content="Hide No Change" Command="{Binding HideNoChangeValueCommand}" />
-                        </StackPanel>
-                        <ListView x:Name="ValueSignalsListBox"
-                                  Grid.Row="1"
-                                  Margin="0,6,0,0"
-                                  ItemsSource="{Binding ValueSignals}"
-                                  AllowDrop="True"
-                                  PreviewMouseLeftButtonDown="ValueSignalsListBox_PreviewMouseLeftButtonDown"
-                                  PreviewMouseMove="ValueSignalsListBox_PreviewMouseMove"
-                                  Drop="ValueSignalsListBox_Drop"
-                                  DragOver="ValueSignalsListBox_DragOver">
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem">
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                    <Setter Property="VerticalContentAlignment" Value="Center" />
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Header="Visible" Width="60">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <CheckBox IsChecked="{Binding IsVisible, Mode=TwoWay}"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Name" Width="240" DisplayMemberBinding="{Binding SettingsDisplayNameWithState}" />
-                                    <GridViewColumn Header="Comment" Width="360">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <TextBox Text="{Binding CommentText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource GridCellEditorTextBoxStyle}"
-                                                         ToolTip="Comment" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                </GridView>
-                            </ListView.View>
-                        </ListView>
-                    </Grid>
-
-                    <GridSplitter Grid.Column="1"
-                                  Width="6"
-                                  HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Stretch"
-                                  Background="#E0E0E0"
-                                  ResizeDirection="Columns"
-                                  ResizeBehavior="PreviousAndNext"
-                                  ShowsPreview="True" />
-                </Grid>
-            </Grid>
+        <Border x:Name="BoolPanelBorder" Grid.Column="2" Grid.RowSpan="2" Style="{StaticResource CardBorderStyle}" Padding="8" Margin="2,0,0,0">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Value Variables at Cursor"
+                       Style="{StaticResource PanelHeaderTextStyle}"
+                       Margin="0,0,0,6" />
+            <DataGrid Grid.Row="1"
+                      Style="{StaticResource ValueGridStyle}"
+                      ItemsSource="{Binding VisibleValueSignals}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      HeadersVisibility="Column"
+                      EnableRowVirtualization="True">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="Variable" Binding="{Binding DisplayName}" Width="2*" ElementStyle="{StaticResource NameCellTextStyle}" />
+                <DataGridTextColumn Header="Value" Binding="{Binding ValueText}" Width="*" ElementStyle="{StaticResource ValueCellTextStyle}" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Grid>
         </Border>
+      </Grid>
 
-        <TextBlock Grid.Row="5"
-                   Margin="0,8,0,0"
-                   Foreground="#666"
-                   Text="Left drag: data cursor. Right drag: delta cursor. Timeline starts at 00:00." />
+      <GridSplitter x:Name="BottomPanelSplitter"
+                    Grid.Row="3"
+                    Height="6"
+                    Style="{StaticResource SplitterStyle}"
+                    ResizeDirection="Rows"
+                    ResizeBehavior="PreviousAndNext" />
+
+      <Border x:Name="BottomPanelBorder" Grid.Row="4" Style="{StaticResource CardBorderStyle}" Padding="10,8" IsEnabled="{Binding CanEdit}">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+
+          <StackPanel Orientation="Horizontal">
+            <TextBlock Style="{StaticResource SectionTitleTextStyle}" Text="Variable Visibility / Comments" />
+            <TextBlock Margin="12,0,0,0"
+                       VerticalAlignment="Center"
+                       FontSize="11"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       Text="Drag rows to reorder. Colors use #RRGGBB." />
+          </StackPanel>
+
+          <Grid Grid.Row="1" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="10" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <WrapPanel Orientation="Horizontal">
+                <TextBlock Style="{StaticResource PanelHeaderTextStyle}" Text="BOOL Variables" Margin="0,0,4,0" />
+                <Button Style="{StaticResource SmallButtonStyle}" Content="Select All" Command="{Binding SelectAllBoolCommand}" />
+                <Button Style="{StaticResource SmallButtonStyle}" Content="Clear All" Command="{Binding ClearAllBoolCommand}" />
+                <Button Style="{StaticResource SmallButtonStyle}" Content="Hide No Change" Command="{Binding HideNoChangeBoolCommand}"
+                        ToolTip="Hide BOOL variables whose value never changes" />
+                <Button Style="{StaticResource SmallButtonStyle}" Content="Auto Assign Colors" Command="{Binding AutoBoolColorsCommand}" />
+              </WrapPanel>
+              <ListView x:Name="BoolSignalsListBox"
+                        Grid.Row="1"
+                        Margin="0,6,0,0"
+                        Style="{StaticResource SettingsListViewStyle}"
+                        ItemsSource="{Binding BoolSignals}"
+                        SelectionChanged="BoolSignalsListBox_SelectionChanged"
+                        AllowDrop="True"
+                        PreviewMouseLeftButtonDown="BoolSignalsListBox_PreviewMouseLeftButtonDown"
+                        PreviewMouseMove="BoolSignalsListBox_PreviewMouseMove"
+                        Drop="BoolSignalsListBox_Drop"
+                        DragOver="BoolSignalsListBox_DragOver">
+                <ListView.ItemContainerStyle>
+                  <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                  </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.View>
+                  <GridView>
+                    <GridViewColumn Header="Visible" Width="60">
+                      <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                          <CheckBox IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                        </DataTemplate>
+                      </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Name" Width="240">
+                      <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding DisplayName}"
+                                     VerticalAlignment="Center"
+                                     TextTrimming="CharacterEllipsis"
+                                     ToolTip="{Binding DisplayName}">
+                            <TextBlock.Style>
+                              <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                <Style.Triggers>
+                                  <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                      <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True" />
+                                      <Condition Binding="{Binding DataContext.IsSelectedBoolJumpMode, RelativeSource={RelativeSource AncestorType=Window}}" Value="True" />
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Foreground" Value="Red" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                  </MultiDataTrigger>
+                                </Style.Triggers>
+                              </Style>
+                            </TextBlock.Style>
+                          </TextBlock>
+                        </DataTemplate>
+                      </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Color" Width="120">
+                      <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                          <Grid>
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="Auto" />
+                              <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <!-- Swatch: shows the lane color; an incomplete or invalid value leaves it empty -->
+                            <Border Width="16"
+                                    Height="16"
+                                    Margin="0,0,6,0"
+                                    CornerRadius="3"
+                                    BorderBrush="#AEB7C2"
+                                    BorderThickness="1"
+                                    VerticalAlignment="Center"
+                                    Background="{Binding ColorHex, FallbackValue=Transparent, TargetNullValue=Transparent}" />
+                            <TextBox Grid.Column="1"
+                                     Text="{Binding ColorHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource HexEditorTextBoxStyle}"
+                                     ToolTip="#RRGGBB" />
+                          </Grid>
+                        </DataTemplate>
+                      </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Comment" Width="360">
+                      <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                          <TextBox Text="{Binding CommentText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   Style="{StaticResource GridCellEditorTextBoxStyle}"
+                                   ToolTip="Comment" />
+                        </DataTemplate>
+                      </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                  </GridView>
+                </ListView.View>
+              </ListView>
+            </Grid>
+
+            <Grid Grid.Column="2">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <WrapPanel Orientation="Horizontal">
+                <TextBlock Style="{StaticResource PanelHeaderTextStyle}" Text="Value Variables" Margin="0,0,4,0" />
+                <Button Style="{StaticResource SmallButtonStyle}" Content="Select All" Command="{Binding SelectAllValueCommand}" />
+                <Button Style="{StaticResource SmallButtonStyle}" Content="Clear All" Command="{Binding ClearAllValueCommand}" />
+                <Button Style="{StaticResource SmallButtonStyle}" Content="Hide No Change" Command="{Binding HideNoChangeValueCommand}"
+                        ToolTip="Hide value variables whose value never changes" />
+              </WrapPanel>
+              <ListView x:Name="ValueSignalsListBox"
+                        Grid.Row="1"
+                        Margin="0,6,0,0"
+                        Style="{StaticResource SettingsListViewStyle}"
+                        ItemsSource="{Binding ValueSignals}"
+                        AllowDrop="True"
+                        PreviewMouseLeftButtonDown="ValueSignalsListBox_PreviewMouseLeftButtonDown"
+                        PreviewMouseMove="ValueSignalsListBox_PreviewMouseMove"
+                        Drop="ValueSignalsListBox_Drop"
+                        DragOver="ValueSignalsListBox_DragOver">
+                <ListView.ItemContainerStyle>
+                  <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                  </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.View>
+                  <GridView>
+                    <GridViewColumn Header="Visible" Width="60">
+                      <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                          <CheckBox IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                        </DataTemplate>
+                      </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Name" Width="240">
+                      <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding SettingsDisplayNameWithState}"
+                                     VerticalAlignment="Center"
+                                     TextTrimming="CharacterEllipsis"
+                                     ToolTip="{Binding SettingsDisplayNameWithState}" />
+                        </DataTemplate>
+                      </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn Header="Comment" Width="360">
+                      <GridViewColumn.CellTemplate>
+                        <DataTemplate>
+                          <TextBox Text="{Binding CommentText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   Style="{StaticResource GridCellEditorTextBoxStyle}"
+                                   ToolTip="Comment" />
+                        </DataTemplate>
+                      </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                  </GridView>
+                </ListView.View>
+              </ListView>
+            </Grid>
+
+            <GridSplitter Grid.Column="1"
+                          Width="10"
+                          Style="{StaticResource SplitterStyle}"
+                          ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext" />
+          </Grid>
+        </Grid>
+      </Border>
     </Grid>
+  </DockPanel>
 </Window>
-

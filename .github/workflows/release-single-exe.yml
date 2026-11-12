@@ -7,51 +7,38 @@ on:
   push:
     tags:
       - "v*"
-      - "V*"
-      - "V.*"
-      - "Ver.*"
 
 jobs:
   release:
     outputs:
       release_tag: ${{ steps.publish_release.outputs.release_tag }}
     runs-on: windows-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         with:
           dotnet-version: 10.0.x
 
       - name: Validate tag and project version
         id: version
         shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = $env:RELEASE_TAG
 
-          $patterns = @(
-            '^v(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$',
-            '^V(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$',
-            '^V\.(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$',
-            '^Ver\.(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$'
-          )
-
-          $tagVersion = $null
-          foreach ($pattern in $patterns) {
-            if ($tag -match $pattern) {
-              $tagVersion = $Matches.version
-              break
-            }
+          if ($tag -notmatch '^v(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$') {
+            throw "Tag must look like v1.2.3."
           }
-
-          if (-not $tagVersion) {
-            throw "Tag must look like v1.2.3, V1.2.3, V.1.2.3, or Ver.1.2.3."
-          }
+          $tagVersion = $Matches.version
 
           [xml]$project = Get-Content "src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj"
           $projectVersion = $project.Project.PropertyGroup.Version
@@ -68,6 +55,9 @@ jobs:
 
       - name: Build
         run: dotnet build .\SysmacDataTraceViewer.sln -c Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test SysmacDataTraceViewer.sln -c Release --no-build
 
       - name: Publish single-file EXE
         shell: pwsh

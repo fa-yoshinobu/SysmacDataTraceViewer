@@ -14,6 +14,7 @@ if /I "%~2"=="clean" set "DO_CLEAN=1"
 if /I "%~3"=="clean" set "DO_CLEAN=1"
 if not "%~1"=="" if /I not "%~1"=="clean" set "RUNTIME=%~1"
 if not "%~2"=="" if /I not "%~2"=="clean" set "OUTDIR=%~2"
+for %%I in ("%OUTDIR%") do set "OUTDIR=%%~fI"
 
 echo Runtime: "%RUNTIME%"
 echo Output : "%OUTDIR%"

@@ -23,6 +23,8 @@ Version date: 2026-02-05
 - Initial status text (before load): `Load a CSV file to display BOOL timeline and value variables.`
 
 ### CSV Input
+- Open through File → Open Trace CSV, by dropping one CSV onto the window, or by passing the first startup argument: `SysmacDataTraceViewer.exe "trace.csv"`. All paths share the same asynchronous loader. Multiple files and non-CSV drops show a reason; an unreadable startup file shows an error and leaves an empty window. Signal-row reordering remains separate. No Windows file association is registered.
+- Trace and comment CSV files use BOM-specified encoding when present. Without a BOM, the entire file is validated as strict UTF-8; decoding failure falls back to Shift_JIS (CP932). Invalid bytes are not silently replaced. The detected encoding is displayed in the status text. Comment CSV saving remains UTF-8.
 - Header row starts with `"Index","Date","ClockTime"...`.
 - Columns are `name:type` (example: `test1:BOOL`).
 - Supported types:
@@ -47,10 +49,15 @@ Version date: 2026-02-05
 - Chart axes: pan/zoom disabled; time window is controlled by the horizontal scrollbar.
 
 ### Screen Layout
-- Top: menu bar and toolbar buttons (open/export/toggles, cursor swap, change jump).
-- Top status bar: current load status text.
+- Window title: loaded file name followed by the application name.
+- Top: menu bar, then a toolbar (panel toggles, cursor swap, change jump, label mode, jump scope) that wraps on narrow windows.
+- Cursor readouts below the toolbar, grouped and color-coded: red data cursor (elapsed time, recorded time, sample index), blue delta cursor (cursor delta), and hover state/duration.
+- Top status bar: current load status text. It turns amber with a warning mark and a Read Details button when the CSV had read issues, and shows a progress indicator and Cancel while loading.
+- Bottom footer: mouse and keyboard hints.
+- Before a trace is loaded, the chart shows how to open one (drop a CSV or File > Open Trace CSV).
+- Every other BOOL lane is lightly striped in the chart and in the name lane; the name lane shows ON as a green `1`.
 - Main area (center):
-  - Left: BOOL name lane with horizontal scrollbar.
+  - Left: BOOL name lane with ellipsized labels (full text in the tooltip) and values kept inside the visible width. Its rows align with the chart plotting area, including the plot padding.
   - Center: time chart (OxyPlot).
   - Right: value panel (values at cursor).
 - Bottom: Variable Settings panel (BOOL/Value visibility, color, comment, order).
@@ -168,7 +175,7 @@ Version date: 2026-02-05
 - Main window:
   - File > Open Trace CSV... opens file dialog; on success, updates chart and panels.
   - File > Export Chart PNG > Visible/Full opens save dialog; on success, writes PNG.
-  - File > Load Comments... opens file dialog; on success, applies comments.
+  - File > Load Comments (CSV / smc2)... opens a comment CSV or Sysmac Studio project. CSV applies saved display settings; smc2 imports only matching nonempty comments, preserving visibility, colors, and ordering.
   - File > Save Comments... opens save dialog; on success, writes comment CSV.
   - Help > About opens About dialog (modal).
 - About dialog:
@@ -218,6 +225,7 @@ Version date: 2026-02-05
 - 初期ステータス: `Load a CSV file to display BOOL timeline and value variables.`
 
 ### CSV入力
+- トレース・コメントCSVはBOMがあればその文字コードで読み込みます。BOMなしではファイル全体をUTF-8として厳密に検証し、復号できなければShift_JIS（CP932）へ切り替えます。不正なバイトを黙って置換しません。判定した文字コードをステータスに表示します。コメントCSVの保存は従来どおりUTF-8です。
 - ヘッダー行は `"Index","Date","ClockTime"...` で始まる。
 - 列名は `name:type` 形式（例: `test1:BOOL`）。
 - 対応型:
@@ -385,3 +393,14 @@ Version date: 2026-02-05
   - 再描画 + ステータス更新
 - 表示/並び変更(Value):
   - 値リスト更新 + ステータス更新
+
+### CSVを開く入口
+File → Open Trace CSV、ウィンドウへのCSV 1ファイルのドロップ、または起動時の第1引数（`SysmacDataTraceViewer.exe "trace.csv"`）で開く。全て同じ非同期読込み処理を呼ぶ。複数ファイルとCSV以外のドロップは理由を表示し、読めない起動ファイルはエラー後に空の画面を残す。信号リストの並び替えとは干渉しない。Windowsの拡張子関連付けは登録しない。
+
+### smc2からコメントを直接取り込む
+
+トレースCSVを開き、File → Load Comments (CSV / smc2)... でSysmac Studioプロジェクトを選択する。処理はバックグラウンドで行い、読込み中のCancelで取り消せる。元プロジェクトは変更せず、コメントCSVも自動保存しない。
+
+対応対象はSLWD形式のグローバル変数・POU内変数、配列要素、構造体／FBのメンバーコメント。CSVの型サフィックスを除く名前とPOUを照合する。複数PLCのプロジェクトでは、CSVの信号名が最も多く解決できるPLCを一意に特定した場合に取り込む。同数の候補がある場合や一致する信号がない場合はエラーを表示し、既存コメントを保持する。
+
+一致した空でないコメントだけを反映し、コメント未設定・未解決の信号は既存コメントを保持する。信号の表示・色・並び順は維持する。ステータスには取込み件数・コメント未設定件数・未解決件数を表示する。Label Mode → Commentでグラフに表示でき、Save Comments...で既存形式のコメントCSVへ保存できる。
