@@ -60,7 +60,7 @@ public sealed class TraceFileOperationsTests
             files.SaveComments();
             vm.ReorderBoolRows(["A:BOOL", "B:BOOL"]);
             dialogs.OpenPath = comments;
-            files.LoadComments();
+            await files.LoadCommentsAsync().ConfigureAwait(true);
             Assert.Equal("B:BOOL", vm.BoolSignals[0].Name);
             Assert.Equal("更新した架空コメント", vm.BoolSignals[0].CommentText);
             Assert.Empty(dialogs.Errors);
@@ -91,6 +91,7 @@ public sealed class TraceFileOperationsTests
         public string? SavePath { get; set; }
         public List<string> Errors { get; } = [];
         public string? ShowOpenCsvFileDialog() => OpenPath;
+        public string? ShowOpenCommentsFileDialog() => OpenPath;
         public string? ShowSaveCsvFileDialog(string suggestedName) => SavePath;
         public string? ShowSavePngFileDialog(string suggestedName) => null;
         public void ShowError(string message, string title) => Errors.Add(title);

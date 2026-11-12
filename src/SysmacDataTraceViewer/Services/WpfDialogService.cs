@@ -19,6 +19,17 @@ internal sealed class WpfDialogService(Window owner) : IDialogService
         return dialog.ShowDialog(owner) == true ? dialog.FileName : null;
     }
 
+    public string? ShowOpenCommentsFileDialog()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Load Comments from CSV or Sysmac Project",
+            Filter = "Comment sources (*.csv;*.smc2)|*.csv;*.smc2|Comment CSV (*.csv)|*.csv|Sysmac Studio project (*.smc2)|*.smc2",
+            CheckFileExists = true
+        };
+        return dialog.ShowDialog(owner) == true ? dialog.FileName : null;
+    }
+
     public string? ShowSaveCsvFileDialog(string fileName)
     {
         var dialog = new SaveFileDialog

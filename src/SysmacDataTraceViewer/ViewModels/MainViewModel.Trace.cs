@@ -408,6 +408,20 @@ internal sealed partial class MainViewModel
     public List<int> GetVisibleBoolIndexes() =>
         [.. BoolSignals.Where(static s => s.IsVisible).Select(static s => s.Index)];
 
+    public void ApplyImportedComments(IReadOnlyDictionary<string, string> comments)
+    {
+        _suspendCommentUpdate = true;
+        try
+        {
+            foreach (var row in BoolSignals)
+                if (comments.TryGetValue(row.Name, out var comment)) row.CommentText = comment;
+            foreach (var row in ValueSignals)
+                if (comments.TryGetValue(row.Name, out var comment)) row.CommentText = comment;
+        }
+        finally { _suspendCommentUpdate = false; }
+        UpdateDisplayLabels();
+    }
+
     public void ApplyCommentData(CommentCsvData data)
     {
         var boolMap = data.BoolSignals.ToDictionary(static s => s.Name, StringComparer.Ordinal);

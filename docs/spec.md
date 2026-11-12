@@ -170,7 +170,7 @@ Version date: 2026-02-05
 - Main window:
   - File > Open Trace CSV... opens file dialog; on success, updates chart and panels.
   - File > Export Chart PNG > Visible/Full opens save dialog; on success, writes PNG.
-  - File > Load Comments... opens file dialog; on success, applies comments.
+  - File > Load Comments (CSV / smc2)... opens a comment CSV or Sysmac Studio project. CSV applies saved display settings; smc2 imports only matching nonempty comments, preserving visibility, colors, and ordering.
   - File > Save Comments... opens save dialog; on success, writes comment CSV.
   - Help > About opens About dialog (modal).
 - About dialog:
@@ -391,3 +391,11 @@ Version date: 2026-02-05
 
 ### CSVを開く入口
 File → Open Trace CSV、ウィンドウへのCSV 1ファイルのドロップ、または起動時の第1引数（`SysmacDataTraceViewer.exe "trace.csv"`）で開く。全て同じ非同期読込み処理を呼ぶ。複数ファイルとCSV以外のドロップは理由を表示し、読めない起動ファイルはエラー後に空の画面を残す。信号リストの並び替えとは干渉しない。Windowsの拡張子関連付けは登録しない。
+
+### smc2からコメントを直接取り込む
+
+トレースCSVを開き、File → Load Comments (CSV / smc2)... でSysmac Studioプロジェクトを選択する。処理はバックグラウンドで行い、読込み中のCancelで取り消せる。元プロジェクトは変更せず、コメントCSVも自動保存しない。
+
+対応対象はSLWD形式のグローバル変数・POU内変数、配列要素、構造体／FBのメンバーコメント。CSVの型サフィックスを除く名前とPOUを照合する。複数PLCのプロジェクトでは、CSVの信号名が最も多く解決できるPLCを一意に特定した場合に取り込む。同数の候補がある場合や一致する信号がない場合はエラーを表示し、既存コメントを保持する。
+
+一致した空でないコメントだけを反映し、コメント未設定・未解決の信号は既存コメントを保持する。信号の表示・色・並び順は維持する。ステータスには取込み件数・コメント未設定件数・未解決件数を表示する。Label Mode → Commentでグラフに表示でき、Save Comments...で既存形式のコメントCSVへ保存できる。

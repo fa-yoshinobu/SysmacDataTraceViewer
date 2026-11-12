@@ -26,6 +26,8 @@ CSVは「File → Open Trace CSV」、ウィンドウへの1ファイルのド�
 - 表示範囲／全範囲のPNG出力
 - コメント・表示・色・順序のコメントCSV保存と読込み
 
+CSVを開いたあと、**File → Load Comments (CSV / smc2)...** でSysmac Studioの `.smc2` を選ぶと、プロジェクトのコメントを直接取り込めます。グラフのラベルは **Label Mode → Comment** で切り替えます。必要なら **Save Comments...** でコメントCSVとして保存できます。
+
 対応する信号型、操作、ショートカットは[仕様書](docs/spec.md)を参照してください。
 
 ## 開発・保守

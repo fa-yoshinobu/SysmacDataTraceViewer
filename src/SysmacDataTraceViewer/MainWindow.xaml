@@ -50,7 +50,7 @@
                         <MenuItem Header="Export _Visible Range PNG..." Command="{Binding ExportVisiblePngCommand}" InputGestureText="Ctrl+E" />
                         <MenuItem Header="Export _Full Range PNG..." Command="{Binding ExportFullPngCommand}" />
                     </MenuItem>
-                    <MenuItem Header="_Load Comments..." Command="{Binding LoadCommentsCommand}" />
+                    <MenuItem Header="_Load Comments (CSV / smc2)..." Command="{Binding LoadCommentsCommand}" />
                     <MenuItem Header="_Save Comments..." Command="{Binding SaveCommentsCommand}" />
                     <Separator />
                     <MenuItem Header="E_xit" Command="{Binding CloseCommand}" />

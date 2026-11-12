@@ -74,9 +74,37 @@ internal sealed class TraceFileOperations(MainViewModel viewModel, IDialogServic
         }, "Save Comments Error");
     }
 
-    public void LoadComments()
+    public async Task LoadCommentsAsync()
     {
-        if (RequireTrace("Load Comments") && dialogs.ShowOpenCsvFileDialog() is { } path) ApplyComments(path, true);
+        if (viewModel.IsLoading || !RequireTrace("Load Comments") || dialogs.ShowOpenCommentsFileDialog() is not { } path) return;
+        if (!Path.GetExtension(path).Equals(".smc2", StringComparison.OrdinalIgnoreCase))
+        {
+            ApplyComments(path, true);
+            return;
+        }
+        using var cancellation = new CancellationTokenSource();
+        _loadCancellation = cancellation;
+        viewModel.IsLoading = true;
+        viewModel.StatusText = "Loading smc2 comments...";
+        var trace = viewModel.TraceData!;
+        var names = trace.BoolSignals.Select(s => s.Name).Concat(trace.ValueSignals.Select(s => s.Name)).ToList();
+        try
+        {
+            var result = await Task.Run(() => SmcCommentImporter.Load(path, names, cancellation.Token), cancellation.Token).ConfigureAwait(true);
+            cancellation.Token.ThrowIfCancellationRequested();
+            viewModel.ApplyImportedComments(result.Comments);
+            trace.CommentEncodingName = string.Empty;
+            trace.ProjectCommentSummary = result.Summary;
+            TraceLoaded?.Invoke();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex) when (IsFileError(ex)) { dialogs.ShowError(ex.Message, "Load Project Comments Error"); }
+        finally
+        {
+            _loadCancellation = null;
+            viewModel.IsLoading = false;
+            viewModel.UpdateStatusForVisibility();
+        }
     }
 
     private void ApplyComments(string path, bool showError)
@@ -85,6 +113,7 @@ internal sealed class TraceFileOperations(MainViewModel viewModel, IDialogServic
         {
             var data = CommentCsvService.Load(path);
             viewModel.TraceData!.CommentEncodingName = data.EncodingName;
+            viewModel.TraceData.ProjectCommentSummary = string.Empty;
             viewModel.ApplyCommentData(data);
             viewModel.UpdateDisplayLabels();
             viewModel.UpdateStatusForVisibility();
@@ -116,5 +145,6 @@ internal sealed class TraceFileOperations(MainViewModel viewModel, IDialogServic
     }
 
     private static bool IsFileError(Exception error) => error is InvalidDataException or IOException or UnauthorizedAccessException
-        or SecurityException or FormatException or ArgumentException or NotSupportedException or InvalidOperationException;
+        or SecurityException or FormatException or ArgumentException or NotSupportedException or InvalidOperationException
+        or System.Xml.XmlException or System.Text.RegularExpressions.RegexMatchTimeoutException;
 }

@@ -50,7 +50,7 @@ internal partial class MainWindow
         finally { _suppressAxisEvent = false; }
     }
     private void SaveComments_Click(object sender, RoutedEventArgs e) => _files.SaveComments();
-    private void LoadComments_Click(object sender, RoutedEventArgs e) => _files.LoadComments();
+    private async void LoadComments_Click(object sender, RoutedEventArgs e) => await _files.LoadCommentsAsync().ConfigureAwait(true);
     private void About_Click(object sender, RoutedEventArgs e) => new AboutWindow { Owner = this }.ShowDialog();
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }
