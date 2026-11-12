@@ -6,21 +6,33 @@ All notable changes are recorded from this point onward.
 
 ## [Unreleased]
 
-### Fixed
-
-- Aligned BOOL name rows with the chart lanes, including the chart padding, and kept BOOL values visible when signal names are long by trimming the names within the panel width.
+## [1.1.0] - 2026-11-13
 
 ### Added
 
-- Import comments directly from Sysmac Studio `.smc2` projects through Load Comments, including local variables, array elements, and structure/FB members. Existing visibility, colors, and ordering are preserved.
+- Detect BOM-marked encodings, validate BOM-less UTF-8 and fall back to Shift_JIS (CP932) for trace and comment CSV files; show detected encodings in the status.
+- Load CSV files in the background with progress and cancellation, preserving the previous trace if parsing fails or is cancelled.
+- Report skipped rows, invalid values and backwards-time rows with a details view; record unexpected exceptions in bounded local logs without CSV names or values.
+- Import comments directly from Sysmac Studio `.smc2` projects, including POU-local variables, array elements and structure/FB members, while preserving display settings.
+- Open a CSV through file drop or a startup argument, using the same loader as the menu.
+- Check the pinned bundled runtime against Microsoft's stable release metadata in a maintenance workflow.
 
 ### Changed
 
-- Refreshed the main window layout: grouped toolbar that wraps on narrow windows, cursor readouts color-coded to the red data cursor and blue delta cursor with fixed-width values, an amber status bar with a progress indicator when a CSV has read issues or is loading, and a keyboard/mouse hint footer.
-- Every other BOOL lane is lightly striped in both the chart and the name lane, and the chart grid lines are softer, so long traces are easier to follow. PNG exports include the stripes.
-- The name lane shows ON values in green, the BOOL color column shows a color swatch, long names are trimmed with a tooltip, and the window title shows the loaded file name.
-- An empty chart shows how to open a trace (drop a CSV or Ctrl+O).
-- Replaced the application icon with a two-lane timing chart design that stays readable at small sizes, with 9 sizes from 16 to 256 px.
+- Reduce plot points for large BOOL traces while retaining the original samples for cursor values, hover readouts and change navigation.
+- Refresh the window with a wrapping toolbar, cursor-specific colors, warning/progress indicators, keyboard hints and an empty-state guide.
+- Add alternating lane stripes to the chart, name lane and PNG exports; show ON values in green, color swatches and full-name tooltips.
+- Show the loaded file name in the title and trim long lane names while keeping BOOL values visible.
+- Replace the application icon with a two-lane timing chart design in 9 sizes from 16 to 256 px.
+- Consolidate version metadata and documentation, complete older changelog entries, and align the specification with the current implementation.
+- Update the bundled .NET runtime to 10.0.15.
+
+### Fixed
+
+- Keep the time scrollbar synchronized with zoom and place it below the chart only.
+- Align name rows with chart lanes by accounting for plot padding and avoiding per-row layout rounding.
+- Save comment CSV files through a temporary file and replacement; round-trip multiline comments, commas and quotes.
+- Run tests in CI and before publishing a release, pin workflow actions and normalize the local publish output path.
 
 ## [1.0.5] - 2026-10-27
 
@@ -59,6 +71,7 @@ All notable changes are recorded from this point onward.
 
 - Initial published Windows viewer with BOOL timelines, primary/delta cursors, typed values, signal visibility and ordering, colors, comment CSV files and PNG export.
 
+[1.1.0]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/v1.1.0
 [1.0.5]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/v1.0.5
 [1.0.4]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/v1.0.4
 [1.0.3]: https://github.com/fa-yoshinobu/SysmacDataTraceViewer/releases/tag/v1.0.3
