@@ -71,7 +71,7 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true `
             -p:DebugType=None `
             -p:DebugSymbols=false `
-            -o .\artifacts\release\win-x64
+            -o .\artifacts\release
 
       - name: Set up release tools
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
@@ -83,7 +83,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          python .github/scripts/release_assets.py prepare --repository "$env:GITHUB_REPOSITORY" --release-tag "$env:RELEASE_TAG" --asset-name SysmacDataTraceViewer-win-x64.zip --file artifacts/release/win-x64/SysmacDataTraceViewer.exe
+          python .github/scripts/release_assets.py prepare --repository "$env:GITHUB_REPOSITORY" --release-tag "$env:RELEASE_TAG" --asset-name SysmacDataTraceViewer-win-x64.zip --file artifacts/release/SysmacDataTraceViewer.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Publish ZIP and checksum

@@ -17,10 +17,10 @@ python -B -m unittest discover -s tests/release
 
 ```powershell
 .\build.bat
-.\build.bat win-x64 artifacts/publish
+.\build.bat win-x64 artifacts/release
 ```
 
-既定の出力先は`artifacts/publish/SysmacDataTraceViewer.exe`です。ランタイム同梱のWindows x64用です。大容量CSVの計測手順は[計測記録](large-csv-benchmark.md)を参照してください。
+既定の出力先は`artifacts/release/SysmacDataTraceViewer.exe`です。ランタイム同梱のWindows x64用です。大容量CSVの計測手順は[計測記録](large-csv-benchmark.md)を参照してください。
 
 ## リリース
 

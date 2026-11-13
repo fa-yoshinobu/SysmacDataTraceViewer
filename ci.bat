@@ -24,9 +24,9 @@ dotnet format SysmacDataTraceViewer.sln analyzers --verify-no-changes --severity
 if errorlevel 1 goto :error
 
 echo [5/5] publish smoke test...
-call build.bat win-x64 artifacts\ci
+call build.bat
 if errorlevel 1 goto :error
-if not exist artifacts\ci\SysmacDataTraceViewer.exe goto :error
+if not exist artifacts\release\SysmacDataTraceViewer.exe goto :error
 
 echo CI checks passed.
 exit /b 0
