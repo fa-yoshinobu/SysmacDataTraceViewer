@@ -6,7 +6,7 @@ cd /d "%~dp0"
 set "PROJECT=src\SysmacDataTraceViewer\SysmacDataTraceViewer.csproj"
 set "CONFIG=Release"
 set "RUNTIME=win-x64"
-set "OUTDIR=artifacts\publish"
+set "OUTDIR=artifacts\release"
 set "DO_CLEAN=0"
 
 if /I "%~1"=="clean" set "DO_CLEAN=1"
@@ -46,6 +46,9 @@ dotnet publish "%PROJECT%" ^
   /p:DebugType=None ^
   /p:DebugSymbols=false ^
   -o "%OUTDIR%"
+if errorlevel 1 goto :error
+
+powershell -NoProfile -File "%~dp0.github\scripts\package_release.ps1" -OutputDirectory "%OUTDIR%" -Runtime "%RUNTIME%"
 if errorlevel 1 goto :error
 
 echo [3/3] done.

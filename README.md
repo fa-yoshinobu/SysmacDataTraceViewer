@@ -45,3 +45,5 @@ Use the ZIP and checksum links above, extract the ZIP, and run `SysmacDataTraceV
 ## ライセンス / License
 
 [MIT License](LICENSE)
+
+ローカル配布物は `build.bat` で作成します。起動EXEは `artifacts/release/SysmacDataTraceViewer.exe`、配布ZIPは `artifacts/release/SysmacDataTraceViewer-win-x64.zip`、SHA-256は同ZIPの `.sha256` です。ZIPを展開し、EXEを直接起動してください。旧出力フォルダーは自動削除しません。
